@@ -19,7 +19,15 @@ public enum PlayerCharacter {
     SOLDIER(6, 8, 8, 8, 6, 4, 4,
             0, 1, 1, 1, 2, 5, 6,
             LoadSave.PLAYER_SOLDIER, 7, 8, 100, 100,
-            12, 18, 44, 39);
+            12, 18, 44, 39),
+
+    FROG(11, 12, 1, 1, 1, 7, 1, 
+            IDLE, RUNNING, JUMP, FALLING, ATTACK, HIT, DEAD,
+            "", 
+            DEAD + 1, 0,
+            32, 32,
+            20, 27,
+            6, 5);
 
 
     public int spriteA_IDLE, spriteA_RUNNING, spriteA_JUMP, spriteA_FALLING, spriteA_ATTACK, spriteA_HIT, spriteA_DEAD;
@@ -33,7 +41,7 @@ public enum PlayerCharacter {
 
     /*
      private float xDrawOffset = 21 * Game.SCALE;
-    private float yDrawOffset = 4 * Game.SCALE;
+     private float yDrawOffset = 4 * Game.SCALE;
      */
 
     PlayerCharacter(int spriteA_IDLE, int spriteA_RUNNING, int spriteA_JUMP, int spriteA_FALLING, int spriteA_ATTACK, int spriteA_HIT, int spriteA_DEAD,

@@ -1,8 +1,8 @@
 package utilz;
 
 import entities.PlayerCharacter;
-import java.awt.Font; 
-import java.awt.FontFormatException; 
+import java.awt.Font;
+import java.awt.FontFormatException;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -12,12 +12,27 @@ import java.net.URL;
 import java.util.ArrayList;
 import javax.imageio.ImageIO;
 
+import mainn.Game; // Import Game to use Game.SCALE
+
+import static utilz.Constants.PlayerConstants.*; // Import PlayerConstants for action integers
+
 public class LoadSave {
 
     // --- Image Path Constants ---
     public static final String PLAYER_PIRATE = "/res/player_sprites.png";
     public static final String PLAYER_ORC = "/res/player_orc.png";
     public static final String PLAYER_SOLDIER = "/res/player_soldier.png";
+    // NEW FROG ANIMATION CONSTANTS
+    public static final String FROG_IDLE = "/res/Frog_Idle.png";
+    public static final String FROG_RUN = "/res/Frog_Run.png";
+    public static final String FROG_JUMP = "/res/Frog_Jump.png";
+    public static final String FROG_FALL = "/res/Frog_Fall.png";
+    public static final String FROG_HIT = "/res/Frog_Hit.png";
+    // If you have a Frog Attack or Dead animation, add them here
+    // public static final String FROG_ATTACK = "/res/Frog_Attack.png";
+    // public static final String FROG_DEAD = "/res/Frog_Dead.png";
+
+
     public static final String LEVEL_ATLAS = "/res/outside_sprites.png";
     public static final String MENU_BUTTONS = "/res/buttonsA.png";
     public static final String MENU_BACKGROUND = "/res/menu_background.png";
@@ -57,23 +72,77 @@ public class LoadSave {
     public static final String REGISTER_BACK_BUTTON = "/res/back_button.png";
     public static final String LIFE_ICON = "/res/heart_icon.png";
     public static final String LEVEL_PATH_PREFIX = "/res/lvls/";
-    // UPDATED FONT CONSTANT for src/fonts location
     public static final String CUSTOM_FONT_JERSEY = "/fonts/Jersey15-Regular.ttf";
 
 
     public static BufferedImage[][] loadAnimations(PlayerCharacter pc) {
-        BufferedImage img = GetSpriteAtlas(pc.playerAtlas);
-        if (img == null) {
-            System.err.println("Failed to load player atlas for: " + pc.playerAtlas);
-            return new BufferedImage[0][0];
+        // We need to know the total number of possible animation states from PlayerConstants
+        // Assuming PlayerConstants.NUM_PLAYER_ACTIONS exists and is static final int
+        // Given your Constants.java, NUM_PLAYER_ACTIONS would need to be added, but
+        // we can derive it from the highest constant (DEAD = 6) + 1.
+        int numPlayerActions = DEAD + 1; // This will be 7 if DEAD is 6.
+        BufferedImage[][] animations = new BufferedImage[numPlayerActions][];
+
+        // This will now switch based on the character type
+        switch (pc) {
+            case PIRATE:
+            case ORC:
+            case SOLDIER:
+                // Existing logic for characters that use a single spritesheet
+                BufferedImage img = GetSpriteAtlas(pc.playerAtlas);
+                if (img == null) {
+                    System.err.println("Failed to load player atlas for: " + pc.playerAtlas);
+                    return new BufferedImage[0][0];
+                }
+                animations = new BufferedImage[pc.rowA][pc.colA];
+                for (int j = 0; j < animations.length; j++)
+                    for (int i = 0; i < animations[j].length; i++)
+                        animations[j][i] = img.getSubimage(i * pc.spriteW, j * pc.spriteH, pc.spriteW, pc.spriteH);
+                break;
+
+            case FROG:
+                int frogSpriteW = pc.spriteW;
+                int frogSpriteH = pc.spriteH;
+               animations[IDLE] = cutSheet(GetSpriteAtlas(FROG_IDLE), pc.getSpriteAmount(IDLE), frogSpriteW, frogSpriteH);
+
+                // RUNNING (12 frames)
+                animations[RUNNING] = cutSheet(GetSpriteAtlas(FROG_RUN), pc.getSpriteAmount(RUNNING), frogSpriteW, frogSpriteH);
+
+                // JUMP (1 frame)
+                animations[JUMP] = cutSheet(GetSpriteAtlas(FROG_JUMP), pc.getSpriteAmount(JUMP), frogSpriteW, frogSpriteH);
+
+                
+                animations[FALLING] = cutSheet(GetSpriteAtlas(FROG_FALL), pc.getSpriteAmount(FALLING), frogSpriteW, frogSpriteH);
+                animations[HIT] = cutSheet(GetSpriteAtlas(FROG_HIT), pc.getSpriteAmount(HIT), frogSpriteW, frogSpriteH);
+                animations[ATTACK] = cutSheet(GetSpriteAtlas(FROG_RUN), pc.getSpriteAmount(ATTACK), frogSpriteW, frogSpriteH);
+                animations[DEAD] = cutSheet(GetSpriteAtlas(FROG_IDLE), pc.getSpriteAmount(DEAD), frogSpriteW, frogSpriteH);
+
+                break;
+
+            default:
+                System.err.println("Unknown PlayerCharacter: " + pc);
+                return new BufferedImage[0][0];
         }
-
-        BufferedImage[][] animations = new BufferedImage[pc.rowA][pc.colA];
-        for (int j = 0; j < animations.length; j++)
-            for (int i = 0; i < animations[j].length; i++)
-                animations[j][i] = img.getSubimage(i * pc.spriteW, j * pc.spriteH, pc.spriteW, pc.spriteH);
-
         return animations;
+    }
+
+    // Helper method to cut a single-row spritesheet (or single image)
+    private static BufferedImage[] cutSheet(BufferedImage sheet, int numFrames, int spriteWidth, int spriteHeight) {
+        if (sheet == null) {
+            System.err.println("Error: Sprite sheet is null. Cannot cut frames. Expected " + numFrames + " frames of " + spriteWidth + "x" + spriteHeight + ".");
+            return new BufferedImage[0];
+        }
+        BufferedImage[] frames = new BufferedImage[numFrames];
+        for (int i = 0; i < numFrames; i++) {
+            try {
+                frames[i] = sheet.getSubimage(i * spriteWidth, 0, spriteWidth, spriteHeight);
+            } catch (java.awt.image.RasterFormatException e) {
+                System.err.println("Error cutting subimage from sheet. Check spriteWidth/spriteHeight or numFrames against actual image dimensions. Sheet: " + sheet.getWidth() + "x" + sheet.getHeight() + ", trying to cut frame " + i + " at " + (i * spriteWidth) + ", 0 with size " + spriteWidth + "x" + spriteHeight);
+                e.printStackTrace();
+                return new BufferedImage[0];
+            }
+        }
+        return frames;
     }
 
 
@@ -112,7 +181,7 @@ public class LoadSave {
         }
 
         try {
-          Font font = Font.createFont(Font.TRUETYPE_FONT, is);
+            Font font = Font.createFont(Font.TRUETYPE_FONT, is);
             return font;
         } catch (FontFormatException | IOException e) {
             e.printStackTrace();

@@ -24,6 +24,7 @@ public class AudioPlayer {
 	public static int ATTACK_ONE = 4;
 	public static int ATTACK_TWO = 5;
 	public static int ATTACK_THREE = 6;
+        public static int PLAYER_HIT = 7;
 
 	private Clip[] songs, effects;
 	private int currentSongId;
@@ -45,7 +46,7 @@ public class AudioPlayer {
 	}
 
 	private void loadEffects() {
-		String[] effectNames = { "die", "jump", "gameover", "lvlcompleted", "attack1", "attack2", "attack3" };
+		String[] effectNames = { "die", "jump", "gameover", "lvlcompleted", "attack1", "attack2", "attack3", "hit" };
 		effects = new Clip[effectNames.length];
 		for (int i = 0; i < effects.length; i++)
 			effects[i] = getClip(effectNames[i]);
@@ -78,6 +79,8 @@ public class AudioPlayer {
 		updateSongVolume();
 		updateEffectsVolume();
 	}
+        
+        
 
 	public void stopSong() {
 		if (songs[currentSongId].isActive())

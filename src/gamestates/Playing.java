@@ -62,16 +62,6 @@ public class Playing extends State implements Statemethods {
     private boolean playerDying;
     private boolean drawRain;
 
-    // Ship will be decided to drawn here. It's just a cool addition to the game
-    // for the first level. Hinting on that the player arrived with the boat.
-
-    // If you would like to have it on more levels, add a value for objects when
-    // creating the level from lvlImgs. Just like any other object.
-
-    // Then play around with position values so it looks correct depending on where
-    // you want
-    // it.
-
     private boolean drawShip = true;
     private int shipAni, shipTick, shipDir = 1;
     private float shipHeightDelta, shipHeightChange = 0.05f * Game.SCALE;

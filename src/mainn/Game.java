@@ -7,6 +7,7 @@ import gamestates.*;
 import gamestates.Register;
 import ui.AudioOptions;
 import gamestates.Leaderboard;
+import gamestates.Playing;
 
 public class Game implements Runnable {
 
@@ -62,7 +63,7 @@ public class Game implements Runnable {
     public void StartNewGame() {
         playing.resetAll();
         Gamestate.state = Gamestate.PLAYING; 
-    getAudioPlayer().playSong(AudioPlayer.LEVEL_1);
+        getAudioPlayer().playSong(AudioPlayer.LEVEL_1);
     }
     
     public void update() {
@@ -103,7 +104,6 @@ public class Game implements Runnable {
         double deltaF = 0;
 
         while (true) {
-
             long currentTime = System.nanoTime();
 
             deltaU += (currentTime - previousTime) / timePerUpdate;
@@ -111,31 +111,24 @@ public class Game implements Runnable {
             previousTime = currentTime;
 
             if (deltaU >= 1) {
-
                 update();
                 updates++;
                 deltaU--;
-
             }
 
             if (deltaF >= 1) {
-
                 gamePanel.repaint();
                 frames++;
                 deltaF--;
-
             }
 
             if (SHOW_FPS_UPS)
                 if (System.currentTimeMillis() - lastCheck >= 1000) {
-
                     lastCheck = System.currentTimeMillis();
                     System.out.println("FPS: " + frames + " | UPS: " + updates);
                     frames = 0;
                     updates = 0;
-
                 }
-
         }
     }
 

@@ -1,8 +1,9 @@
 package gamestates;
 
-import java.awt.Color; 
-import java.awt.Font;  
-import java.awt.FontMetrics; 
+import entities.PlayerCharacter;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -14,10 +15,11 @@ import utilz.LoadSave;
 
 public class Menu extends State implements Statemethods {
 
-    private MenuButton[] buttons = new MenuButton[4];
+    private MenuButton[] buttons = new MenuButton[4]; // Reverted to 4 buttons
     private BufferedImage backgroundImg, backgroundImgPink;
     private int menuX, menuY, menuWidth, menuHeight;
-    private Font customGameTitleFont;  
+
+    private Font customGameTitleFont;
     private Font customInstructionFont;
 
     public Menu(Game game) {
@@ -37,12 +39,12 @@ public class Menu extends State implements Statemethods {
     }
 
     private void loadButtons() {
-        buttons[0] = new MenuButton(Game.GAME_WIDTH / 2, (int) (130 * Game.SCALE), 0, Gamestate.PLAYER_SELECTION);
+        buttons[0] = new MenuButton(Game.GAME_WIDTH / 2, (int) (130 * Game.SCALE), 0, Gamestate.PLAYING);
         buttons[1] = new MenuButton(Game.GAME_WIDTH / 2, (int) (200 * Game.SCALE), 1, Gamestate.REGISTER);
-        buttons[2] = new MenuButton(Game.GAME_WIDTH / 2, (int) (270 * Game.SCALE), 3, Gamestate.LEADERBOARD);
-        buttons[3] = new MenuButton(Game.GAME_WIDTH / 2, (int) (340 * Game.SCALE), 2, Gamestate.QUIT);
+        buttons[2] = new MenuButton(Game.GAME_WIDTH / 2, (int) (270 * Game.SCALE), 3, Gamestate.LEADERBOARD); // Assuming index 3 for Leaderboard
+        buttons[3] = new MenuButton(Game.GAME_WIDTH / 2, (int) (340 * Game.SCALE), 2, Gamestate.QUIT); // Assuming index 2 for Quit
     }
-    
+
     private void loadCustomFonts() {
         Font baseFont = LoadSave.GetFont(LoadSave.CUSTOM_FONT_JERSEY);
 
@@ -50,14 +52,11 @@ public class Menu extends State implements Statemethods {
             customGameTitleFont = baseFont.deriveFont(Font.BOLD, (float)(36 * Game.SCALE));
             customInstructionFont = baseFont.deriveFont(Font.PLAIN, (float)(16 * Game.SCALE));
         } else {
-            // Fallback to Arial if your custom font file isn't found or loaded correctly
             System.err.println("Custom font 'Jersey15-Regular.ttf' not loaded. Falling back to Arial.");
             customGameTitleFont = new Font("Arial", Font.BOLD, (int)(36 * Game.SCALE));
             customInstructionFont = new Font("Arial", Font.PLAIN, (int)(16 * Game.SCALE));
         }
     }
-    
-    
 
     @Override
     public void update() {
@@ -67,8 +66,7 @@ public class Menu extends State implements Statemethods {
 
     @Override
     public void keyTyped(KeyEvent e) {
-        // No specific typing logic needed for the Menu screen, so leave empty.
-        // This method is required because Statemethods now defines it.
+        
     }
 
     @Override
@@ -76,28 +74,15 @@ public class Menu extends State implements Statemethods {
         g.drawImage(backgroundImgPink, 0, 0, Game.GAME_WIDTH, Game.GAME_HEIGHT, null);
         g.drawImage(backgroundImg, menuX, menuY, menuWidth, menuHeight, null);
 
-        // --- NEW: Text Overlay ---
-        // Set font for the title
-        g.setFont(new Font("Jersey15-Regular", Font.BOLD, (int) (36 * Game.SCALE))); // Larger font for title
-        g.setColor(new Color(255, 255, 255)); // White color for text
+        g.setFont(customGameTitleFont);
+        g.setColor(new Color(255, 255, 255));
 
-        String gameTitle = "Jump up \n Superstar!";
-        FontMetrics fm = g.getFontMetrics();
+        String gameTitle = "Jump up, Superstar!";
+        FontMetrics fm = g.getFontMetrics(customGameTitleFont);
         int titleWidth = fm.stringWidth(gameTitle);
         int titleX = (Game.GAME_WIDTH - titleWidth) / 2;
-        int titleY = (int) (85 * Game.SCALE); // Adjust Y position as needed
+        int titleY = (int) (85 * Game.SCALE);
         g.drawString(gameTitle, titleX, titleY);
-
-//        // Optional: Smaller instruction text
-//        g.setFont(new Font("Arial", Font.PLAIN, (int) (16 * Game.SCALE))); // Smaller font for instruction
-//        g.setColor(new Color(200, 200, 200)); // Slightly darker white/light gray
-//        String instructionText = "A Platformer Adventure"; // Or "Click a button to start!"
-//        int instructionWidth = fm.stringWidth(instructionText); // Recalculate for new font
-//        int instructionX = (Game.GAME_WIDTH - instructionWidth) / 2;
-//        int instructionY = (int) (titleY + fm.getHeight() + (5 * Game.SCALE)); // Below the title
-//        g.drawString(instructionText, instructionX, instructionY);
-//        // --- END NEW: Text Overlay ---
-
 
         for (MenuButton mb : buttons)
             mb.draw(g);
@@ -112,15 +97,28 @@ public class Menu extends State implements Statemethods {
         }
     }
 
-    @Override
+  @Override
     public void mouseReleased(MouseEvent e) {
-        for (MenuButton mb : buttons) {
-            if (isIn(e, mb)) {
-                if (mb.isMousePressed())
-                    mb.applyGamestate();
+        for (MenuButton mb : buttons) { // Assuming 'buttons' is an array/list of your menu buttons
+            if (isIn(e, mb)) { // 'isIn' is likely a helper method to check if mouse is over button
+
+                if (mb.isMousePressed()) {
+                    // This is where we add the new line.
+                    // We check if the button being released is the "PLAYING" button.
+                    if (mb.getState() == Gamestate.PLAYING) {
+                        // --- ADD THIS LINE HERE ---
+                        game.getPlaying().setPlayerCharacter(PlayerCharacter.FROG);
+                        // -------------------------
+                    }
+                    mb.applyGamestate(); // This line sets the actual game state (e.g., Gamestate.PLAYING)
+                }
+
+                // This line sets the level song. It's fine where it is,
+                // as it will execute if the button's state is PLAYING (which it will be after applyGamestate for that button).
                 if (mb.getState() == Gamestate.PLAYING)
                     game.getAudioPlayer().setLevelSong(game.getPlaying().getLevelManager().getLevelIndex());
-                break;
+
+                break; // Exit loop after handling the button
             }
         }
         resetButtons();
@@ -129,7 +127,6 @@ public class Menu extends State implements Statemethods {
     private void resetButtons() {
         for (MenuButton mb : buttons)
             mb.resetBools();
-
     }
 
     @Override
@@ -142,7 +139,6 @@ public class Menu extends State implements Statemethods {
                 mb.setMouseOver(true);
                 break;
             }
-
     }
 
     @Override
@@ -151,14 +147,11 @@ public class Menu extends State implements Statemethods {
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        // TODO Auto-generated method stub
-
+        
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
-        // TODO Auto-generated method stub
-
+        
     }
-
 }

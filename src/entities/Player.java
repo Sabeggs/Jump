@@ -6,7 +6,7 @@ import static utilz.Constants.*;
 import static utilz.Constants.Directions.*;
 
 import java.awt.Color;
-import java.awt.Font; // Import Font class for text
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.geom.Rectangle2D;
@@ -30,9 +30,9 @@ public class Player extends Entity {
     private float fallSpeedAfterCollision = 0.5f * Game.SCALE;
 
     // health system
-    private int lives = 3; 
-    private final int MAX_LIVES = 3; 
-    private boolean dead = false; 
+    private int lives = 3;    
+    private final int MAX_LIVES = 3;    
+    private boolean dead = false;    
 
     // status bar ui
     private BufferedImage statusBarImg;
@@ -42,7 +42,7 @@ public class Player extends Entity {
     private int statusBarX = (int) (10 * Game.SCALE);
     private int statusBarY = (int) (10 * Game.SCALE);
 
-    private int healthBarXStart = (int) (34 * Game.SCALE); 
+    private int healthBarXStart = (int) (34 * Game.SCALE);    
     private int healthBarYStart = (int) (14 * Game.SCALE);
 
     private int powerBarWidth = (int) (104 * Game.SCALE);
@@ -69,7 +69,7 @@ public class Player extends Entity {
     private final PlayerCharacter playerCharacter;
 
     // NEW: Variable for the life icon image
-    private BufferedImage lifeIcon; 
+    private BufferedImage lifeIcon;    
 
     // constructor
     public Player(PlayerCharacter playerCharacter, Playing playing) {
@@ -235,7 +235,16 @@ public class Player extends Entity {
 
     // player rendering
     public void render(Graphics g, int lvlOffset) {
-        g.drawImage(animations[playerCharacter.getRowIndex(state)][aniIndex], (int) (hitbox.x - playerCharacter.xDrawOffset) - lvlOffset + flipX, (int) (hitbox.y - playerCharacter.yDrawOffset + (int) (pushDrawOffset)), width * flipW, height, null);
+        int aniStateForDrawing = state;
+        if (state == ATTACK || powerAttackActive) {
+            if (moving) { 
+                aniStateForDrawing = RUNNING;
+            } else { 
+                aniStateForDrawing = IDLE;
+            }
+        }
+        
+        g.drawImage(animations[playerCharacter.getRowIndex(aniStateForDrawing)][aniIndex], (int) (hitbox.x - playerCharacter.xDrawOffset) - lvlOffset + flipX, (int) (hitbox.y - playerCharacter.yDrawOffset + (int) (pushDrawOffset)), width * flipW, height, null);
         drawHitbox(g, lvlOffset);
         drawUI(g);
     }
@@ -245,17 +254,17 @@ public class Player extends Entity {
         g.drawImage(statusBarImg, statusBarX, statusBarY, statusBarWidth, statusBarHeight, null);
 
         // health
-        if (lifeIcon != null) { 
+        if (lifeIcon != null) {    
             int iconX = healthBarXStart + statusBarX;
             int iconY = healthBarYStart + statusBarY;
-            int iconSize = (int)(100 * Game.SCALE); 
+            int iconSize = (int)(100 * Game.SCALE);    
 
             g.drawImage(lifeIcon, iconX, iconY, iconSize, iconSize, null);
 
-            g.setColor(Color.WHITE); 
-            g.setFont(new Font("Jersey15-Regular", Font.BOLD, (int)(24 * Game.SCALE))); 
+            g.setColor(Color.WHITE);    
+            g.setFont(new Font("Jersey15-Regular", Font.BOLD, (int)(24 * Game.SCALE)));    
 
-            int textX = iconX + iconSize + (int)(1 * Game.SCALE); 
+            int textX = iconX + iconSize + (int)(1 * Game.SCALE);    
             int textY = iconY + (int)(iconSize / 2) + (int)(g.getFontMetrics().getAscent() / 2) - (int)(g.getFontMetrics().getDescent() / 2); // Center text vertically with icon
 
             g.drawString("x" + lives, textX, textY);
@@ -328,61 +337,72 @@ public class Player extends Entity {
 
     // player position update
     private void updatePos() {
-        moving = false;
+        moving = false; // Reset moving state for the current frame
 
-        if (jump)
+        if (jump) { // Handles jump initiation (sets initial airSpeed)
             jump();
+        }
 
-        if (!inAir)
-            if (!powerAttackActive)
-                if ((!left && !right) || (right && left))
-                    return;
-
-        float xSpeed = 0;
-
+        float xSpeed = 0; // Calculate desired horizontal speed for this frame
         if (left && !right) {
             xSpeed -= walkSpeed;
             flipX = width;
             flipW = -1;
-        }
-        if (right && !left) {
+        } else if (right && !left) { // Use else if to ensure only one direction is chosen
             xSpeed += walkSpeed;
             flipX = 0;
             flipW = 1;
         }
 
         if (powerAttackActive) {
-            if ((!left && !right) || (left && right)) {
-                if (flipW == -1)
+            // If power attack is active, force movement in current direction
+            if ((!left && !right) || (left && right)) { // If no specific direction pressed, use facing direction
+                if (flipW == -1) {
                     xSpeed = -walkSpeed;
-                else
+                } else {
                     xSpeed = walkSpeed;
+                }
             }
-
-            xSpeed *= 3;
+            xSpeed *= 3; // Boost speed for power attack
         }
 
-        if (!inAir)
-            if (!IsEntityOnFloor(hitbox, lvlData))
-                inAir = true;
+        // --- Vertical Gravity Application & Initial In-Air Check ---
+        // If not currently in air, check if player is actually on solid ground
+        if (!inAir && !utilz.HelpMethods.IsEntityOnFloor(hitbox, lvlData)) {
+            inAir = true; // Player has fallen off an edge
+        }
 
-        if (inAir && !powerAttackActive) {
-            if (CanMoveHere(hitbox.x, hitbox.y + airSpeed, hitbox.width, hitbox.height, lvlData)) {
-                hitbox.y += airSpeed;
-                airSpeed += GRAVITY;
-                updateXPos(xSpeed);
+        // --- HORIZONTAL MOVEMENT & COLLISION RESOLUTION ---
+        // Try to move horizontally based on xSpeed. Check for collision only for the X-axis.
+        if (utilz.HelpMethods.CanMoveHere(hitbox.x + xSpeed, hitbox.y, hitbox.width, hitbox.height, lvlData)) {
+            hitbox.x += xSpeed; // No horizontal collision, apply movement
+        } else {
+            // Horizontal collision detected: snap to wall and stop horizontal movement
+            hitbox.x = utilz.HelpMethods.GetEntityXPosNextToWall(hitbox, xSpeed);
+            xSpeed = 0; // <--- CRUCIAL: Stop horizontal velocity after hitting a wall
+        }
+
+        // --- VERTICAL MOVEMENT & COLLISION RESOLUTION ---
+        if (inAir) {
+            if (utilz.HelpMethods.CanMoveHere(hitbox.x, hitbox.y + airSpeed, hitbox.width, hitbox.height, lvlData)) {
+                hitbox.y += airSpeed; // No vertical collision, apply movement
+                airSpeed += GRAVITY; // Apply gravity
             } else {
-                hitbox.y = GetEntityYPosUnderRoofOrAboveFloor(hitbox, airSpeed);
-                if (airSpeed > 0)
-                    resetInAir();
-                else
-                    airSpeed = fallSpeedAfterCollision;
-                updateXPos(xSpeed);
-            }
+                hitbox.y = utilz.HelpMethods.GetEntityYPosUnderRoofOrAboveFloor(hitbox, airSpeed);
+                if (airSpeed > 0) { // If falling and hit the floor
+                    resetInAir(); // This method MUST set inAir=false AND airSpeed=0
+                } else { // If jumping and hit a roof
+                    airSpeed = fallSpeedAfterCollision; // Start falling down
 
-        } else
-            updateXPos(xSpeed);
-        moving = true;
+                }
+            }
+        }
+
+        if (Math.abs(xSpeed) > 0 || inAir) {
+            moving = true;
+        } else {
+            moving = false; // Character is on ground and not moving horizontally
+        }
     }
 
     // jump action
@@ -413,17 +433,16 @@ public class Player extends Entity {
         }
     }
 
-    // player hit method (takes damage / loses a life)
     public void hit() {
-        // only hit if not already in hit state (basic invincibility)
         if (state == HIT) {
             return;
         }
 
         lives--; // decrease a life/hit point
         newState(HIT); // transition to the hit animation
+        
+        playing.getGame().getAudioPlayer().playEffect(AudioPlayer.PLAYER_HIT);
 
-        // the dead state transition will be handled in the update() method based on 'lives'
     }
 
     // player hit with enemy pushback

@@ -33,8 +33,6 @@ public class HelpMethods {
 	}
 
 	public static boolean IsEntityInWater(Rectangle2D.Float hitbox, int[][] lvlData) {
-		// Will only check if entity touch top water. Can't reach bottom water if not
-		// touched top water.
 		if (GetTileValue(hitbox.x, hitbox.y + hitbox.height, lvlData) != 48)
 			if (GetTileValue(hitbox.x + hitbox.width, hitbox.y + hitbox.height, lvlData) != 48)
 				return false;
@@ -59,30 +57,29 @@ public class HelpMethods {
 
 	}
 
-	public static float GetEntityXPosNextToWall(Rectangle2D.Float hitbox, float xSpeed) {
-		int currentTile = (int) (hitbox.x / Game.TILES_SIZE);
-		if (xSpeed > 0) {
-			// Right
-			int tileXPos = currentTile * Game.TILES_SIZE;
-			int xOffset = (int) (Game.TILES_SIZE - hitbox.width);
-			return tileXPos + xOffset - 1;
-		} else
-			// Left
-			return currentTile * Game.TILES_SIZE;
-	}
+	   public static float GetEntityXPosNextToWall(Rectangle2D.Float hitbox, float xSpeed) {
+        int wallTileX;
 
-	public static float GetEntityYPosUnderRoofOrAboveFloor(Rectangle2D.Float hitbox, float airSpeed) {
-		int currentTile = (int) (hitbox.y / Game.TILES_SIZE);
-		if (airSpeed > 0) {
-			// Falling - touching floor
-			int tileYPos = currentTile * Game.TILES_SIZE;
-			int yOffset = (int) (Game.TILES_SIZE - hitbox.height);
-			return tileYPos + yOffset - 1;
-		} else
-			// Jumping
-			return currentTile * Game.TILES_SIZE;
+        if (xSpeed > 0) { 
+            wallTileX = (int) ((hitbox.x + hitbox.width + xSpeed) / Game.TILES_SIZE);
+            return wallTileX * Game.TILES_SIZE - hitbox.width - 1;
+        } else { 
+            wallTileX = (int) ((hitbox.x + xSpeed) / Game.TILES_SIZE);
+            return (wallTileX + 1) * Game.TILES_SIZE + 1; 
+        }
+    }
 
-	}
+	   public static float GetEntityYPosUnderRoofOrAboveFloor(Rectangle2D.Float hitbox, float airSpeed) {
+        int wallTileY;
+
+        if (airSpeed > 0) {
+            wallTileY = (int) ((hitbox.y + hitbox.height + airSpeed) / Game.TILES_SIZE);
+            return wallTileY * Game.TILES_SIZE - hitbox.height - 1;
+        } else {
+            wallTileY = (int) ((hitbox.y + airSpeed) / Game.TILES_SIZE);
+            return (wallTileY + 1) * Game.TILES_SIZE + 1; 
+        }
+    }
 
 	public static boolean IsEntityOnFloor(Rectangle2D.Float hitbox, int[][] lvlData) {
 		if (!IsSolid(hitbox.x, hitbox.y + hitbox.height + 1, lvlData))
@@ -131,12 +128,6 @@ public class HelpMethods {
 		return true;
 	}
 
-	// Player can sometimes be on an edge and in sight of enemy.
-	// The old method would return false because the player x is not on edge.
-	// This method checks both player x and player x + width.
-	// If tile under playerBox.x is not solid, we switch to playerBox.x +
-	// playerBox.width;
-	// One of them will be true, because of prior checks.
 
 	public static boolean IsSightClear(int[][] lvlData, Rectangle2D.Float enemyBox, Rectangle2D.Float playerBox, int yTile) {
 		int firstXTile = (int) (enemyBox.x / Game.TILES_SIZE);
