@@ -15,8 +15,6 @@ import static utilz.Constants.ObjectConstants.*;
 import static utilz.HelpMethods.CanCannonSeePlayer;
 import static utilz.HelpMethods.IsProjectileHittingLevel;
 import static utilz.Constants.Projectiles.*;
-
-// NEW Imports for Star specific constants
 import static utilz.Constants.ObjectConstants.STAR;
 import static utilz.Constants.ObjectConstants.STAR_WIDTH;
 import static utilz.Constants.ObjectConstants.STAR_HEIGHT;
@@ -25,11 +23,10 @@ public class ObjectManager {
 
     private Playing playing;
     private BufferedImage[][] potionImgs, containerImgs;
-    private BufferedImage[] cannonImgs, grassImgs; // cannonImgs is a 1D array in your code
+    private BufferedImage[] cannonImgs, grassImgs;
     private BufferedImage[][] treeImgs;
-    private BufferedImage spikeImg, cannonBallImg; // spikeImg is a single image in your code
+    private BufferedImage spikeImg, cannonBallImg;
 
-    // NEW: Star images and list (these ARE new fields, as stars are managed by ObjectManager)
     private BufferedImage[] starImgs;
     private ArrayList<Star> stars;
 
@@ -37,22 +34,22 @@ public class ObjectManager {
     private ArrayList<GameContainer> containers;
     private ArrayList<Projectile> projectiles = new ArrayList<>();
 
-    private Level currentLevel; // Kept as in your original code
+    private Level currentLevel;
 
     public ObjectManager(Playing playing) {
         this.playing = playing;
-        currentLevel = playing.getLevelManager().getCurrentLevel(); // Kept as in your original code
+        currentLevel = playing.getLevelManager().getCurrentLevel();
         loadImgs();
     }
 
     public void checkSpikesTouched(Player p) {
-        for (Spike s : currentLevel.getSpikes()) // Accessing spikes from currentLevel
+        for (Spike s : currentLevel.getSpikes())
             if (s.getHitbox().intersects(p.getHitbox()))
                 p.kill();
     }
 
     public void checkSpikesTouched(Enemy e) {
-        for (Spike s : currentLevel.getSpikes()) // Accessing spikes from currentLevel
+        for (Spike s : currentLevel.getSpikes())
             if (s.getHitbox().intersects(e.getHitbox()))
                 e.hurt(200);
     }
@@ -88,57 +85,51 @@ public class ObjectManager {
             }
     }
 
-    // NEW METHOD: Check for player touching a Star
+    // check for player touching a star
     public void checkStarTouched(Player p) {
-        for (Star s : stars) { // Loop through the 'stars' field, as these are managed locally
+        for (Star s : stars) {
             if (s.isActive()) {
                 if (s.getHitbox().intersects(p.getHitbox())) {
-                    s.setActive(false); // Deactivate the star once touched
-                    playing.setLevelCompleted(true); // Trigger level completion
-                    return; // Assume only one star is needed to complete the level
+                    s.setActive(false);
+                    playing.setLevelCompleted(true);
+                    return;
                 }
             }
         }
     }
 
     public void loadObjects(Level newLevel) {
-        currentLevel = newLevel; // Update currentLevel as in your original code
-        potions = new ArrayList<>(newLevel.getPotions()); // Correctly copies the list
-        containers = new ArrayList<>(newLevel.getContainers()); // Correctly copies the list
+        currentLevel = newLevel;
+        potions = new ArrayList<>(newLevel.getPotions());
+        containers = new ArrayList<>(newLevel.getContainers());
 
-        // NEW: Load Star objects - these *are* managed directly by ObjectManager
         stars = new ArrayList<>(newLevel.getStars());
 
-        projectiles.clear(); // Clear existing projectiles
+        projectiles.clear();
     }
 
     private void loadImgs() {
-        // --- YOUR ORIGINAL POTION IMAGES LOADING ---
         BufferedImage potionSprite = LoadSave.GetSpriteAtlas(LoadSave.POTION_ATLAS);
         potionImgs = new BufferedImage[2][7];
         for (int j = 0; j < potionImgs.length; j++)
             for (int i = 0; i < potionImgs[j].length; i++)
                 potionImgs[j][i] = potionSprite.getSubimage(12 * i, 16 * j, 12, 16);
 
-        // --- YOUR ORIGINAL CONTAINER IMAGES LOADING ---
         BufferedImage containerSprite = LoadSave.GetSpriteAtlas(LoadSave.CONTAINER_ATLAS);
         containerImgs = new BufferedImage[2][8];
         for (int j = 0; j < containerImgs.length; j++)
             for (int i = 0; i < containerImgs[j].length; i++)
                 containerImgs[j][i] = containerSprite.getSubimage(40 * i, 30 * j, 40, 30);
 
-        // --- YOUR ORIGINAL SPIKE IMAGE LOADING ---
         spikeImg = LoadSave.GetSpriteAtlas(LoadSave.TRAP_ATLAS);
 
-        // --- YOUR ORIGINAL CANNON IMAGES LOADING ---
-        cannonImgs = new BufferedImage[7]; // This is a 1D array as in your code
+        cannonImgs = new BufferedImage[7];
         BufferedImage tempCannon = LoadSave.GetSpriteAtlas(LoadSave.CANNON_ATLAS);
         for (int i = 0; i < cannonImgs.length; i++)
             cannonImgs[i] = tempCannon.getSubimage(i * 40, 0, 40, 26);
 
         cannonBallImg = LoadSave.GetSpriteAtlas(LoadSave.CANNON_BALL);
 
-        // --- YOUR ORIGINAL TREE IMAGES LOADING ---
         treeImgs = new BufferedImage[2][4];
         BufferedImage treeOneImg = LoadSave.GetSpriteAtlas(LoadSave.TREE_ONE_ATLAS);
         for (int i = 0; i < 4; i++)
@@ -147,25 +138,21 @@ public class ObjectManager {
         for (int i = 0; i < 4; i++)
             treeImgs[1][i] = treeTwoImg.getSubimage(i * 62, 0, 62, 54);
 
-        // --- YOUR ORIGINAL GRASS IMAGES LOADING ---
         BufferedImage grassTemp = LoadSave.GetSpriteAtlas(LoadSave.GRASS_ATLAS);
         grassImgs = new BufferedImage[2];
         for (int i = 0; i < grassImgs.length; i++)
             grassImgs[i] = grassTemp.getSubimage(32 * i, 0, 32, 32);
 
-        // --- NEW: Load Star Images ---
+        // load star images
         BufferedImage starAtlas = LoadSave.GetSpriteAtlas(LoadSave.STAR_ANIMATION);
         starImgs = new BufferedImage[GetSpriteAmount(STAR)];
         for (int i = 0; i < starImgs.length; i++) {
-            // CORRECTED LINE: Use STAR_WIDTH_DEFAULT and STAR_HEIGHT_DEFAULT
-            // These are the original, unscaled pixel dimensions of your sprite frames on the atlas.
             starImgs[i] = starAtlas.getSubimage(i * STAR_WIDTH_DEFAULT, 0, STAR_WIDTH_DEFAULT, STAR_HEIGHT_DEFAULT);
         }
-        // -----------------------------
     }
 
     public void update(int[][] lvlData, Player player) {
-        updateBackgroundTrees(); // Accessing trees from currentLevel implicitly
+        updateBackgroundTrees();
         for (Potion p : potions)
             if (p.isActive())
                 p.update();
@@ -174,22 +161,22 @@ public class ObjectManager {
             if (gc.isActive())
                 gc.update();
 
-        updateCannons(lvlData, player); // Accessing cannons from currentLevel implicitly
+        updateCannons(lvlData, player);
         updateProjectiles(lvlData, player);
 
-        // NEW: Update Stars
-        for (Star s : stars) { // Loop through the 'stars' field
+        // update stars
+        for (Star s : stars) {
             if (s.isActive()) {
-                s.update(); // Call Star's update (which calls GameObject's update)
+                s.update();
             }
         }
 
-        // NEW: Check for player-star collision after stars have updated
+        // check for player-star collision after stars have updated
         checkStarTouched(player);
     }
 
     private void updateBackgroundTrees() {
-        for (BackgroundTree bt : currentLevel.getTrees()) // Accessing trees from currentLevel
+        for (BackgroundTree bt : currentLevel.getTrees())
             bt.update();
     }
 
@@ -220,7 +207,7 @@ public class ObjectManager {
     }
 
     private void updateCannons(int[][] lvlData, Player player) {
-        for (Cannon c : currentLevel.getCannons()) { // Accessing cannons from currentLevel
+        for (Cannon c : currentLevel.getCannons()) {
             if (!c.doAnimation)
                 if (c.getTileY() == player.getTileY())
                     if (isPlayerInRange(c, player))
@@ -251,17 +238,17 @@ public class ObjectManager {
         drawGrass(g, xLvlOffset);
         drawBackgroundTrees(g, xLvlOffset);
 
-        // NEW: Draw Stars
+        // draw stars
         drawStars(g, xLvlOffset);
     }
 
     private void drawGrass(Graphics g, int xLvlOffset) {
-        for (Grass grassObj : currentLevel.getGrass()) // Accessing grass from currentLevel
+        for (Grass grassObj : currentLevel.getGrass())
             g.drawImage(grassImgs[grassObj.getType()], grassObj.getX() - xLvlOffset, grassObj.getY(), (int) (32 * Game.SCALE), (int) (32 * Game.SCALE), null);
     }
 
     public void drawBackgroundTrees(Graphics g, int xLvlOffset) {
-        for (BackgroundTree bt : currentLevel.getTrees()) { // Accessing trees from currentLevel
+        for (BackgroundTree bt : currentLevel.getTrees()) {
             int type = bt.getType();
             if (type == 9)
                 type = 8;
@@ -277,7 +264,7 @@ public class ObjectManager {
     }
 
     private void drawCannons(Graphics g, int xLvlOffset) {
-        for (Cannon c : currentLevel.getCannons()) { // Accessing cannons from currentLevel
+        for (Cannon c : currentLevel.getCannons()) {
             int x = (int) (c.getHitbox().x - xLvlOffset);
             int width = CANNON_WIDTH;
 
@@ -290,7 +277,7 @@ public class ObjectManager {
     }
 
     private void drawTraps(Graphics g, int xLvlOffset) {
-        for (Spike s : currentLevel.getSpikes()) // Accessing spikes from currentLevel
+        for (Spike s : currentLevel.getSpikes())
             g.drawImage(spikeImg, (int) (s.getHitbox().x - xLvlOffset), (int) (s.getHitbox().y - s.getyDrawOffset()), SPIKE_WIDTH, SPIKE_HEIGHT, null);
     }
 
@@ -316,9 +303,9 @@ public class ObjectManager {
             }
     }
 
-    // NEW METHOD: drawStars
+    // drawstars
     private void drawStars(Graphics g, int xLvlOffset) {
-        for (Star s : stars) { // Loop through the 'stars' field
+        for (Star s : stars) {
             if (s.isActive()) {
                 g.drawImage(starImgs[s.getAniIndex()],
                         (int) (s.getHitbox().x - s.getxDrawOffset() - xLvlOffset),
@@ -329,9 +316,8 @@ public class ObjectManager {
     }
 
     public void resetAllObjects() {
-        loadObjects(playing.getLevelManager().getCurrentLevel()); // Reloads potions, containers, stars
+        loadObjects(playing.getLevelManager().getCurrentLevel());
 
-        // Reset individual managed lists
         for (Potion p : potions)
             p.reset();
         for (GameContainer gc : containers)
@@ -339,14 +325,11 @@ public class ObjectManager {
         for (Star s : stars)
             s.reset();
 
-        // Reset objects accessed directly from currentLevel
         for (Cannon c : currentLevel.getCannons())
             c.reset();
         for (Spike s : currentLevel.getSpikes())
             s.reset();
-        // Assuming BackgroundTree does NOT need reset, as per your previous request.
-        // If it does, you'd re-add: for (BackgroundTree bt : currentLevel.getTrees()) bt.reset();
 
-        projectiles.clear(); // Clear all projectiles
+        projectiles.clear();
     }
 }

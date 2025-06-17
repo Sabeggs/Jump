@@ -235,7 +235,7 @@ public class Constants {
 
 	   public static class UI { 
 
-        public static final String HEART_SPRITE_SHEET = "/res/heart_animation.png"; // Make sure this path is correct!
+        public static final String HEART_SPRITE_SHEET = "/res/heart_animation.png";
         public static final int HEART_SPRITE_WIDTH = 18;
         public static final int HEART_SPRITE_HEIGHT = 14;
         public static final int HEART_SPRITE_FRAMES = 8;

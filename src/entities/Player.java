@@ -15,8 +15,8 @@ import java.awt.image.BufferedImage;
 import audio.AudioPlayer;
 import gamestates.Playing;
 import mainn.Game;
-import utilz.LoadSave; 
-import static utilz.Constants.UI.*; 
+import utilz.LoadSave;
+import static utilz.Constants.UI.*;
 
 public class Player extends Entity {
 
@@ -26,7 +26,7 @@ public class Player extends Entity {
     private boolean left, right, jump;
     private int[][] lvlData;
 
-    // jumping / gravity
+    // jumping and gravity
     private float jumpSpeed = -2.25f * Game.SCALE;
     private float fallSpeedAfterCollision = 0.5f * Game.SCALE;
 
@@ -35,12 +35,10 @@ public class Player extends Entity {
     private final int MAX_LIVES = 3;
     private boolean dead = false;
 
-    // --- NEW Animated Heart fields ---
-    private BufferedImage[] heartAnimations; 
+    private BufferedImage[] heartAnimations;
     private int heartAnimationTick = 0;
-    private int heartAnimationFrame = 0;  
-  
-
+    private int heartAnimationFrame = 0;
+    
     private int flipX = 0;
     private int flipW = 1;
 
@@ -56,7 +54,7 @@ public class Player extends Entity {
         this.state = IDLE;
         this.walkSpeed = Game.SCALE * 1.0f;
         animations = LoadSave.loadAnimations(playerCharacter);
-        lifeIcon = LoadSave.GetSpriteAtlas(LoadSave.LIFE_ICON); 
+        lifeIcon = LoadSave.GetSpriteAtlas(LoadSave.LIFE_ICON);
         heartAnimations = LoadSave.GetHeartAnimationSprites();
         initHitbox(playerCharacter.hitboxW, playerCharacter.hitboxH);
     }
@@ -71,7 +69,7 @@ public class Player extends Entity {
 
     // player update
     public void update() {
-        // player death check
+        // player death logic
         if (lives <= 0) {
             if (state != DEAD) {
                 state = DEAD;
@@ -80,7 +78,6 @@ public class Player extends Entity {
                 playing.setPlayerDying(true);
                 playing.getGame().getAudioPlayer().playEffect(AudioPlayer.DIE);
 
-                // check if player died in air
                 if (!IsEntityOnFloor(hitbox, lvlData)) {
                     inAir = true;
                     airSpeed = 0;
@@ -105,6 +102,7 @@ public class Player extends Entity {
 
         updateHeartAnimation();
 
+        // hit state handling
         if (state == HIT) {
             if (aniIndex <= PlayerCharacter.FROG.getSpriteAmount(state) - 3)
                 pushBack(pushBackDir, lvlData, 1.25f);
@@ -112,6 +110,7 @@ public class Player extends Entity {
         } else
             updatePos();
 
+        // interaction checks
         if (moving) {
             checkPotionTouched();
             checkSpikesTouched();
@@ -119,40 +118,38 @@ public class Player extends Entity {
             tileY = (int) (hitbox.y / Game.TILES_SIZE);
         }
 
-
         updateAnimationTick();
         setAnimation();
     }
 
-    // water damage check
+    // water check
     private void checkInsideWater() {
         if (IsEntityInWater(hitbox, playing.getLevelManager().getCurrentLevel().getLevelData()))
             kill();
     }
 
-    // spike collision check
+    // spike check
     private void checkSpikesTouched() {
         playing.checkSpikesTouched(this);
     }
 
-    // potion collision check
+    // potion check
     private void checkPotionTouched() {
         playing.checkPotionTouched(hitbox);
     }
 
     // player rendering
     public void render(Graphics g, int lvlOffset) {
-        g.drawImage(animations[PlayerCharacter.FROG.getRowIndex(state)][aniIndex], (int) (hitbox.x - PlayerCharacter.FROG.xDrawOffset) - lvlOffset + flipX, (int) (hitbox.y - PlayerCharacter.FROG.yDrawOffset + (int) (pushDrawOffset)), width * flipW, height, null);//        drawHitbox(g, lvlOffset);
+        g.drawImage(animations[PlayerCharacter.FROG.getRowIndex(state)][aniIndex], (int) (hitbox.x - PlayerCharacter.FROG.xDrawOffset) - lvlOffset + flipX, (int) (hitbox.y - PlayerCharacter.FROG.yDrawOffset + (int) (pushDrawOffset)), width * flipW, height, null);
         drawUI(g);
     }
 
     // ui rendering
     private void drawUI(Graphics g) {
-        int heartIconX = (int) (20 * Game.SCALE); // New X position for the heart icon
-        int heartIconY = (int) (20 * Game.SCALE); // New Y position for the heart icon
+        int heartIconX = (int) (20 * Game.SCALE);
+        int heartIconY = (int) (20 * Game.SCALE);
 
         if (heartAnimations != null && heartAnimations.length > 0 && heartAnimations[heartAnimationFrame] != null) {
-            // Draw the heart animation frame
             g.drawImage(heartAnimations[heartAnimationFrame],
                     heartIconX,
                     heartIconY,
@@ -163,19 +160,17 @@ public class Player extends Entity {
             g.setColor(Color.WHITE);
             g.setFont(new Font("Jersey15-Regular", Font.BOLD, (int) (24 * Game.SCALE)));
 
-            // Position the text "x" + lives next to the heart
             int textX = heartIconX + (int) (HEART_SPRITE_WIDTH * Game.SCALE) + (int) (5 * Game.SCALE);
             int textY = heartIconY + (int) (HEART_SPRITE_HEIGHT * Game.SCALE / 2) + (int) (g.getFontMetrics().getAscent() / 2) - (int) (g.getFontMetrics().getDescent() / 2);
 
             g.drawString("x" + lives, textX, textY);
-        } else if (lifeIcon != null) { // Fallback if animated heart is not loaded
-            int fallbackIconSize = (int) (20 * Game.SCALE); // You might need to adjust this size
+        } else if (lifeIcon != null) {
+            int fallbackIconSize = (int) (20 * Game.SCALE);
             g.drawImage(lifeIcon, heartIconX, heartIconY, fallbackIconSize, fallbackIconSize, null);
 
             g.setColor(Color.WHITE);
             g.setFont(new Font("Jersey15-Regular", Font.BOLD, (int) (24 * Game.SCALE)));
 
-            // Position the text "x" + lives next to the fallback icon
             int textX = heartIconX + fallbackIconSize + (int) (5 * Game.SCALE);
             int textY = heartIconY + (int) (fallbackIconSize / 2) + (int) (g.getFontMetrics().getAscent() / 2) - (int) (g.getFontMetrics().getDescent() / 2);
             g.drawString("x" + lives, textX, textY);
@@ -200,16 +195,18 @@ public class Player extends Entity {
         }
     }
 
+    // heart animation update
     private void updateHeartAnimation() {
         heartAnimationTick++;
-        if (heartAnimationTick >= HEART_ANIM_SPEED) { // Uses HEART_ANIM_SPEED from Constants.UI
-            heartAnimationTick = 0; // Reset tick
-            heartAnimationFrame++;  // Move to the next frame
-            if (heartAnimationFrame >= HEART_SPRITE_FRAMES) { // Uses HEART_SPRITE_FRAMES from Constants.UI
-                heartAnimationFrame = 0; // Loop back to the first frame
+        if (heartAnimationTick >= HEART_ANIM_SPEED) {
+            heartAnimationTick = 0;
+            heartAnimationFrame++;
+            if (heartAnimationFrame >= HEART_SPRITE_FRAMES) {
+                heartAnimationFrame = 0;
             }
         }
     }
+
     // animation state setting
     private void setAnimation() {
         int startAni = state;
@@ -241,51 +238,44 @@ public class Player extends Entity {
 
     // player position update
     private void updatePos() {
-        moving = false; // Reset moving state for the current frame
+        moving = false;
 
-        if (jump) { // Handles jump initiation (sets initial airSpeed)
+        if (jump) {
             jump();
         }
 
-        float xSpeed = 0; // Calculate desired horizontal speed for this frame
+        float xSpeed = 0;
         if (left && !right) {
             xSpeed -= walkSpeed;
             flipX = width;
             flipW = -1;
-        } else if (right && !left) { // Use else if to ensure only one direction is chosen
+        } else if (right && !left) {
             xSpeed += walkSpeed;
             flipX = 0;
             flipW = 1;
         }
 
-        // --- Vertical Gravity Application & Initial In-Air Check ---
-        // If not currently in air, check if player is actually on solid ground
         if (!inAir && !utilz.HelpMethods.IsEntityOnFloor(hitbox, lvlData)) {
-            inAir = true; // Player has fallen off an edge
+            inAir = true;
         }
 
-        // --- HORIZONTAL MOVEMENT & COLLISION RESOLUTION ---
-        // Try to move horizontally based on xSpeed. Check for collision only for the X-axis.
         if (utilz.HelpMethods.CanMoveHere(hitbox.x + xSpeed, hitbox.y, hitbox.width, hitbox.height, lvlData)) {
-            hitbox.x += xSpeed; // No horizontal collision, apply movement
+            hitbox.x += xSpeed;
         } else {
-            // Horizontal collision detected: snap to wall and stop horizontal movement
             hitbox.x = utilz.HelpMethods.GetEntityXPosNextToWall(hitbox, xSpeed);
-            xSpeed = 0; // <--- CRUCIAL: Stop horizontal velocity after hitting a wall
+            xSpeed = 0;
         }
 
-        // --- VERTICAL MOVEMENT & COLLISION RESOLUTION ---
         if (inAir) {
             if (utilz.HelpMethods.CanMoveHere(hitbox.x, hitbox.y + airSpeed, hitbox.width, hitbox.height, lvlData)) {
-                hitbox.y += airSpeed; // No vertical collision, apply movement
-                airSpeed += GRAVITY; // Apply gravity
+                hitbox.y += airSpeed;
+                airSpeed += GRAVITY;
             } else {
                 hitbox.y = utilz.HelpMethods.GetEntityYPosUnderRoofOrAboveFloor(hitbox, airSpeed);
-                if (airSpeed > 0) { // If falling and hit the floor
-                    resetInAir(); // This method MUST set inAir=false AND airSpeed=0
-                } else { // If jumping and hit a roof
-                    airSpeed = fallSpeedAfterCollision; // Start falling down
-
+                if (airSpeed > 0) {
+                    resetInAir();
+                } else {
+                    airSpeed = fallSpeedAfterCollision;
                 }
             }
         }
@@ -293,7 +283,7 @@ public class Player extends Entity {
         if (Math.abs(xSpeed) > 0 || inAir) {
             moving = true;
         } else {
-            moving = false; // Character is on ground and not moving horizontally
+            moving = false;
         }
     }
 
@@ -321,25 +311,24 @@ public class Player extends Entity {
         }
     }
 
+    // player hit
     public void hit() {
         if (state == HIT) {
             return;
         }
 
-        lives--; // decrease a life/hit point
-        newState(HIT); // transition to the hit animation
+        lives--;
+        newState(HIT);
 
         playing.getGame().getAudioPlayer().playEffect(AudioPlayer.PLAYER_HIT);
-
     }
 
-
-    // player hit with enemy pushback
+    // player hit with pushback
     public void hit(Enemy e) {
-        if (state == HIT) { // already hit, basic invincibility
+        if (state == HIT) {
             return;
         }
-        hit(); // call the base hit method
+        hit();
         pushBackOffsetDir = UP;
         pushDrawOffset = 0;
 
@@ -349,16 +338,16 @@ public class Player extends Entity {
             pushBackDir = LEFT;
     }
 
-    // kill method (instant death)
+    // instant death
     public void kill() {
-        lives = 0; // set lives to 0 for instant death
+        lives = 0;
     }
 
-    // NEW METHOD FOR GAINING LIVES (used by red potion)
+    // gain life
     public void addLife(int value) {
         lives += value;
         if (lives > MAX_LIVES) {
-            lives = MAX_LIVES; // Cap lives at MAX_LIVES
+            lives = MAX_LIVES;
         }
     }
 
@@ -374,7 +363,6 @@ public class Player extends Entity {
         left = false;
         right = false;
     }
-
 
     // left getter
     public boolean isLeft() {
@@ -408,8 +396,8 @@ public class Player extends Entity {
         moving = false;
         airSpeed = 0f;
         state = IDLE;
-        lives = MAX_LIVES; // reset lives to full
-        dead = false; // reset death status 
+        lives = MAX_LIVES;
+        dead = false;
 
         hitbox.x = x;
         hitbox.y = y;

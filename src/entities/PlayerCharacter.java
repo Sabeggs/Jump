@@ -1,16 +1,14 @@
 package entities;
 
-import utilz.LoadSave;
-
 import static utilz.Constants.PlayerConstants.*;
 
 import mainn.Game;
 
 public enum PlayerCharacter {
 
-    FROG(11, 12, 1,  1, 7, 1, 
+    FROG(11, 12, 1, 1, 7, 1,
             IDLE, RUNNING, JUMP, FALLING, HIT, DEAD,
-            "", 
+            "",
             DEAD + 1, 0,
             32, 32,
             20, 27,
@@ -26,13 +24,8 @@ public enum PlayerCharacter {
     public int xDrawOffset, yDrawOffset;
 
 
-    /*
-     private float xDrawOffset = 21 * Game.SCALE;
-     private float yDrawOffset = 4 * Game.SCALE;
-     */
-
-    PlayerCharacter(int spriteA_IDLE, int spriteA_RUNNING, int spriteA_JUMP, int spriteA_FALLING, int spriteA_HIT, int spriteA_DEAD, // Removed spriteA_ATTACK parameter
-            int rowIDLE, int rowRUNNING, int rowJUMP, int rowFALLING, int rowHIT, int rowDEAD, // Removed rowATTACK parameter
+    PlayerCharacter(int spriteA_IDLE, int spriteA_RUNNING, int spriteA_JUMP, int spriteA_FALLING, int spriteA_HIT, int spriteA_DEAD,
+            int rowIDLE, int rowRUNNING, int rowJUMP, int rowFALLING, int rowHIT, int rowDEAD,
             String playerAtlas, int rowA, int colA, int spriteW, int spriteH,
             int hitboxW, int hitboxH,
             int xDrawOffset, int yDrawOffset) {

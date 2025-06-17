@@ -15,8 +15,6 @@ public class Rain {
 	private float rainSpeed = 1.25f;
 	private BufferedImage rainParticle;
 
-	// Worth knowing, adding particles this way can cost a lot in
-	// computer power. Disable it if the game lags.
 	public Rain() {
 		rand = new Random();
 		drops = new Point2D.Float[1000];

@@ -15,8 +15,7 @@ import objects.GameContainer;
 import objects.Grass;
 import objects.Potion;
 import objects.Spike;
-import static utilz.Constants.ObjectConstants.STAR;
-import objects.Star; // This import is already present and correct
+import objects.Star;
 
 import static utilz.Constants.EnemyConstants.*;
 import static utilz.Constants.ObjectConstants.*;
@@ -35,7 +34,7 @@ public class Level {
     private ArrayList<Cannon> cannons = new ArrayList<>();
     private ArrayList<BackgroundTree> trees = new ArrayList<>();
     private ArrayList<Grass> grass = new ArrayList<>();
-    private ArrayList<Star> stars = new ArrayList<>(); // Already present, good!
+    private ArrayList<Star> stars = new ArrayList<>();
 
     private int lvlTilesWide;
     private int maxTilesOffset;
@@ -51,8 +50,6 @@ public class Level {
     }
 
     private void loadLevel() {
-
-
         for (int y = 0; y < img.getHeight(); y++)
             for (int x = 0; x < img.getWidth(); x++) {
                 Color c = new Color(img.getRGB(x, y));
@@ -90,7 +87,6 @@ public class Level {
         }
     }
 
-    // --- MODIFIED: Added case for STAR ---
     private void loadObjects(int blueValue, int x, int y) {
         switch (blueValue) {
         case RED_POTION, BLUE_POTION -> potions.add(new Potion(x * Game.TILES_SIZE, y * Game.TILES_SIZE, blueValue));
@@ -101,7 +97,6 @@ public class Level {
         case STAR -> stars.add(new Star(x * Game.TILES_SIZE, y * Game.TILES_SIZE, blueValue));
         }
     }
-    // ------------------------------------
 
     private void calcLvlOffsets() {
         lvlTilesWide = img.getWidth();
@@ -164,7 +159,6 @@ public class Level {
     public ArrayList<Grass> getGrass() {
         return grass;
     }
-
 
     public ArrayList<Star> getStars() {
         return stars;

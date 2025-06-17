@@ -21,8 +21,7 @@ public class KeyboardInputs implements KeyListener {
             case PLAYING -> gamePanel.getGame().getPlaying().keyReleased(e);
             case OPTIONS -> gamePanel.getGame().getGameOptions().keyReleased(e);
             case REGISTER -> gamePanel.getGame().getRegister().keyReleased(e);
-            case LEADERBOARD -> gamePanel.getGame().getLeaderboard().keyReleased(e); // ADD THIS LINE
-            // REMOVE THIS (if it was there): case CREDITS -> gamePanel.getGame().getCredits().keyReleased(e);
+            case LEADERBOARD -> gamePanel.getGame().getLeaderboard().keyReleased(e); 
         }
     }
 
@@ -33,8 +32,7 @@ public class KeyboardInputs implements KeyListener {
             case PLAYING -> gamePanel.getGame().getPlaying().keyPressed(e);
             case OPTIONS -> gamePanel.getGame().getGameOptions().keyPressed(e);
             case REGISTER -> gamePanel.getGame().getRegister().keyPressed(e);
-            case LEADERBOARD -> gamePanel.getGame().getLeaderboard().keyPressed(e); // ADD THIS LINE
-            // REMOVE THIS (if it was there): case CREDITS -> gamePanel.getGame().getCredits().keyPressed(e);
+            case LEADERBOARD -> gamePanel.getGame().getLeaderboard().keyPressed(e);
         }
     }
 
@@ -42,9 +40,7 @@ public class KeyboardInputs implements KeyListener {
     public void keyTyped(KeyEvent e) {
         switch (Gamestate.state) {
             case REGISTER -> gamePanel.getGame().getRegister().keyTyped(e);
-            // ADD THIS LINE (if keyTyped is ever needed for leaderboard, though less common)
             case LEADERBOARD -> gamePanel.getGame().getLeaderboard().keyTyped(e);
-            // REMOVE THIS (if it was there): case CREDITS -> gamePanel.getGame().getCredits().keyTyped(e);
         }
     }
 }

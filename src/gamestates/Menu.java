@@ -15,7 +15,7 @@ import utilz.LoadSave;
 
 public class Menu extends State implements Statemethods {
 
-    private MenuButton[] buttons = new MenuButton[4]; // Reverted to 4 buttons
+    private MenuButton[] buttons = new MenuButton[4];
     private BufferedImage backgroundImg, backgroundImgPink;
     private int menuX, menuY, menuWidth, menuHeight;
 
@@ -41,8 +41,8 @@ public class Menu extends State implements Statemethods {
     private void loadButtons() {
         buttons[0] = new MenuButton(Game.GAME_WIDTH / 2, (int) (130 * Game.SCALE), 0, Gamestate.PLAYING);
         buttons[1] = new MenuButton(Game.GAME_WIDTH / 2, (int) (200 * Game.SCALE), 1, Gamestate.REGISTER);
-        buttons[2] = new MenuButton(Game.GAME_WIDTH / 2, (int) (270 * Game.SCALE), 3, Gamestate.LEADERBOARD); // Assuming index 3 for Leaderboard
-        buttons[3] = new MenuButton(Game.GAME_WIDTH / 2, (int) (340 * Game.SCALE), 2, Gamestate.QUIT); // Assuming index 2 for Quit
+        buttons[2] = new MenuButton(Game.GAME_WIDTH / 2, (int) (270 * Game.SCALE), 3, Gamestate.LEADERBOARD);
+        buttons[3] = new MenuButton(Game.GAME_WIDTH / 2, (int) (340 * Game.SCALE), 2, Gamestate.QUIT);
     }
 
     private void loadCustomFonts() {
@@ -52,7 +52,7 @@ public class Menu extends State implements Statemethods {
             customGameTitleFont = baseFont.deriveFont(Font.BOLD, (float)(40 * Game.SCALE));
             customInstructionFont = baseFont.deriveFont(Font.PLAIN, (float)(16 * Game.SCALE));
         } else {
-            System.err.println("Custom font 'Jersey15-Regular.ttf' not loaded. Falling back to Arial.");
+            System.err.println("custom font 'jersey15-regular.ttf' not loaded. falling back to arial.");
             customGameTitleFont = new Font("Arial", Font.PLAIN, (int)(36 * Game.SCALE));
             customInstructionFont = new Font("Arial", Font.PLAIN, (int)(16 * Game.SCALE));
         }
@@ -69,7 +69,6 @@ public class Menu extends State implements Statemethods {
         
     }
 
-    // In your gamestates/Menu.java
     @Override
     public void draw(Graphics g) {
         g.drawImage(backgroundImgPink, 0, 0, Game.GAME_WIDTH, Game.GAME_HEIGHT, null);
@@ -78,28 +77,26 @@ public class Menu extends State implements Statemethods {
         g.setFont(customGameTitleFont);
         g.setColor(new Color(255, 255, 255));
 
-        // --- MODIFIED TITLE DRAWING START ---
-        String line1 = "Jump up";
-        String line2 = "Superstar!";
+        // title drawing
+        String line1 = "jump up";
+        String line2 = "superstar!";
 
         FontMetrics fm = g.getFontMetrics(customGameTitleFont);
 
-        // Calculate X position for both lines to be horizontally centered
         int line1Width = fm.stringWidth(line1);
         int line1X = (Game.GAME_WIDTH - line1Width) / 2;
 
         int line2Width = fm.stringWidth(line2);
         int offsetX = (int) (5.5 * Game.SCALE);        
-        int line2X = (Game.GAME_WIDTH - line2Width) / 2 + offsetX; 
+        int line2X = (Game.GAME_WIDTH - line2Width) / 2 + offsetX;
 
-       
+        
         int line1Y = (int) (65 * Game.SCALE);
 
         int line2Y = line1Y + fm.getHeight() + (int) (-12 * Game.SCALE);
 
         g.drawString(line1, line1X, line1Y);
         g.drawString(line2, line2X, line2Y);
-        // --- MODIFIED TITLE DRAWING END ---
 
         for (MenuButton mb : buttons) {
             mb.draw(g);
@@ -121,22 +118,11 @@ public class Menu extends State implements Statemethods {
             if (isIn(e, mb)) {
                 if (mb.isMousePressed()) {
                     if (mb.getState() == Gamestate.PLAYING) {
-                        // Instead of just setting the state, call the comprehensive start method
-                        game.StartNewGame(); // <--- CHANGE HERE!
+                        game.StartNewGame();
                     } else {
-                        // For all other buttons (Register, Leaderboard, Quit), use the existing logic
                         mb.applyGamestate();
                     }
                 }
-
-                // Note: The line below will still execute for the PLAYING button *if*
-                // StartNewGame() doesn't completely replace its functionality.
-                // However, since StartNewGame() already plays LEVEL_1 song, this line
-                // might be redundant or even problematic if it tries to set the song
-                // to a different level index immediately.
-                // For now, let's keep it and see. We can remove it later if it causes issues.
-                // if (mb.getState() == Gamestate.PLAYING)
-                //     game.getAudioPlayer().setLevelSong(game.getPlaying().getLevelManager().getLevelIndex());
                 break;
             }
         }

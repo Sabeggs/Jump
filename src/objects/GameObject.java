@@ -15,7 +15,7 @@ public class GameObject {
     protected Rectangle2D.Float hitbox;
     protected boolean doAnimation, active = true;
     protected int aniTick, aniIndex;
-    protected int xDrawOffset, yDrawOffset; // These are already present, good!
+    protected int xDrawOffset, yDrawOffset;
 
     public GameObject(int x, int y, int objType) {
         this.x = x;
@@ -94,7 +94,6 @@ public class GameObject {
         return yDrawOffset;
     }
 
-    // --- NEW METHODS: Setters for draw offsets ---
     public void setxDrawOffset(int xDrawOffset) {
         this.xDrawOffset = xDrawOffset;
     }
@@ -102,7 +101,6 @@ public class GameObject {
     public void setyDrawOffset(int yDrawOffset) {
         this.yDrawOffset = yDrawOffset;
     }
-    // ---------------------------------------------
 
     public int getAniIndex() {
         return aniIndex;
