@@ -15,14 +15,14 @@ import java.awt.image.BufferedImage;
 import audio.AudioPlayer;
 import gamestates.Playing;
 import mainn.Game;
-import utilz.LoadSave; // Ensure this import is present
-import static utilz.Constants.UI.*; // Ensure this static import is present
+import utilz.LoadSave; 
+import static utilz.Constants.UI.*; 
 
 public class Player extends Entity {
 
     // class variables
     private BufferedImage[][] animations;
-    private boolean moving = false, attacking = false;
+    private boolean moving = false;
     private boolean left, right, jump;
     private int[][] lvlData;
 
@@ -36,69 +36,29 @@ public class Player extends Entity {
     private boolean dead = false;
 
     // --- NEW Animated Heart fields ---
-    private BufferedImage[] heartAnimations; // Array to hold all animation frames
-    private int heartAnimationTick = 0;      // Counter for animation speed
-    private int heartAnimationFrame = 0;     // Index of the current animation frame to draw
-    // Removed: testHeartX and testHeartY are no longer needed as we're drawing at iconX/iconY
-    // --- END NEW Animated Heart fields ---
-
-    // status bar ui
-    private BufferedImage statusBarImg;
-
-    private int statusBarWidth = (int) (192 * Game.SCALE);
-    private int statusBarHeight = (int) (58 * Game.SCALE);
-    private int statusBarX = (int) (10 * Game.SCALE);
-    private int statusBarY = (int) (10 * Game.SCALE);
-
-    private int healthBarXStart = (int) (34 * Game.SCALE);
-    private int healthBarYStart = (int) (14 * Game.SCALE);
-
-    private int powerBarWidth = (int) (104 * Game.SCALE);
-    private int powerBarHeight = (int) (2 * Game.SCALE);
-    private int powerBarXStart = (int) (44 * Game.SCALE);
-    private int powerBarYStart = (int) (34 * Game.SCALE);
-    private int powerWidth = powerBarWidth;
-    private int powerMaxValue = 200;
-    private int powerValue = powerMaxValue;
+    private BufferedImage[] heartAnimations; 
+    private int heartAnimationTick = 0;
+    private int heartAnimationFrame = 0;  
+  
 
     private int flipX = 0;
     private int flipW = 1;
 
-    private boolean attackChecked;
     private Playing playing;
 
     private int tileY = 0;
 
-    private boolean powerAttackActive;
-    private int powerAttackTick;
-    private int powerGrowSpeed = 15;
-    private int powerGrowTick;
-
-    private final PlayerCharacter playerCharacter;
-
-    // NEW: Variable for the life icon image
     private BufferedImage lifeIcon;
 
-    // constructor
     public Player(PlayerCharacter playerCharacter, Playing playing) {
         super(0, 0, (int) (playerCharacter.spriteW * Game.SCALE), (int) (playerCharacter.spriteH * Game.SCALE));
-        this.playerCharacter = playerCharacter;
         this.playing = playing;
         this.state = IDLE;
         this.walkSpeed = Game.SCALE * 1.0f;
         animations = LoadSave.loadAnimations(playerCharacter);
-        statusBarImg = LoadSave.GetSpriteAtlas(LoadSave.STATUS_BAR);
-        lifeIcon = LoadSave.GetSpriteAtlas(LoadSave.LIFE_ICON); // NEW: Load the life icon
-
-        // --- NEW: Load the heart animation sprites ---
+        lifeIcon = LoadSave.GetSpriteAtlas(LoadSave.LIFE_ICON); 
         heartAnimations = LoadSave.GetHeartAnimationSprites();
-        // Removed: Debug print statements
-         System.out.println("Player: heartAnimations array size = " + (heartAnimations != null ? heartAnimations.length : "null"));
-         System.out.println("Player: First heart frame is null? " + (heartAnimations != null && heartAnimations.length > 0 ? (heartAnimations[0] == null) : "N/A"));
-        // --- END NEW ---
-
         initHitbox(playerCharacter.hitboxW, playerCharacter.hitboxH);
-        initAttackBox();
     }
 
     // spawn position setup
@@ -109,16 +69,8 @@ public class Player extends Entity {
         hitbox.y = y;
     }
 
-    // attack box initialization
-    private void initAttackBox() {
-        attackBox = new Rectangle2D.Float(x, y, (int) (35 * Game.SCALE), (int) (20 * Game.SCALE));
-        resetAttackBox();
-    }
-
     // player update
     public void update() {
-        updatePowerBar();
-
         // player death check
         if (lives <= 0) {
             if (state != DEAD) {
@@ -133,14 +85,13 @@ public class Player extends Entity {
                     inAir = true;
                     airSpeed = 0;
                 }
-            } else if (aniIndex == playerCharacter.getSpriteAmount(DEAD) - 1 && aniTick >= ANI_SPEED - 1) {
+            } else if (aniIndex == PlayerCharacter.FROG.getSpriteAmount(DEAD) - 1 && aniTick >= ANI_SPEED - 1) {
                 playing.setGameOver(true);
                 playing.getGame().getAudioPlayer().stopSong();
                 playing.getGame().getAudioPlayer().playEffect(AudioPlayer.GAMEOVER);
             } else {
                 updateAnimationTick();
 
-                // fall if in air
                 if (inAir)
                     if (CanMoveHere(hitbox.x, hitbox.y + airSpeed, hitbox.width, hitbox.height, lvlData)) {
                         hitbox.y += airSpeed;
@@ -152,14 +103,10 @@ public class Player extends Entity {
             return;
         }
 
-        // --- NEW: Update the heart animation tick ---
         updateHeartAnimation();
-        // --- END NEW ---
-
-        updateAttackBox();
 
         if (state == HIT) {
-            if (aniIndex <= playerCharacter.getSpriteAmount(state) - 3)
+            if (aniIndex <= PlayerCharacter.FROG.getSpriteAmount(state) - 3)
                 pushBack(pushBackDir, lvlData, 1.25f);
             updatePushBackDrawOffset();
         } else
@@ -170,17 +117,8 @@ public class Player extends Entity {
             checkSpikesTouched();
             checkInsideWater();
             tileY = (int) (hitbox.y / Game.TILES_SIZE);
-            if (powerAttackActive) {
-                powerAttackTick++;
-                if (powerAttackTick >= 35) {
-                    powerAttackTick = 0;
-                    powerAttackActive = false;
-                }
-            }
         }
 
-        if (attacking || powerAttackActive)
-            checkAttack();
 
         updateAnimationTick();
         setAnimation();
@@ -202,109 +140,45 @@ public class Player extends Entity {
         playing.checkPotionTouched(hitbox);
     }
 
-    // attack logic
-    private void checkAttack() {
-        if (attackChecked || aniIndex != 1)
-            return;
-        attackChecked = true;
-
-        if (powerAttackActive)
-            attackChecked = false;
-
-        playing.checkEnemyHit(attackBox);
-        playing.checkObjectHit(attackBox);
-        playing.getGame().getAudioPlayer().playAttackSound();
-    }
-
-    // attack box position right
-    private void setAttackBoxOnRightSide() {
-        attackBox.x = hitbox.x + hitbox.width - (int) (Game.SCALE * 5);
-    }
-
-    // attack box position left
-    private void setAttackBoxOnLeftSide() {
-        attackBox.x = hitbox.x - hitbox.width - (int) (Game.SCALE * 10);
-    }
-
-    // update attack box position
-    private void updateAttackBox() {
-        if (right && left) {
-            if (flipW == 1) {
-                setAttackBoxOnRightSide();
-            } else {
-                setAttackBoxOnLeftSide();
-            }
-
-        } else if (right || (powerAttackActive && flipW == 1))
-            setAttackBoxOnRightSide();
-        else if (left || (powerAttackActive && flipW == -1))
-            setAttackBoxOnLeftSide();
-
-        attackBox.y = hitbox.y + (Game.SCALE * 10);
-    }
-
-    // power bar update
-    private void updatePowerBar() {
-        powerWidth = (int) ((powerValue / (float) powerMaxValue) * powerBarWidth);
-        powerGrowTick++;
-        if (powerGrowTick >= powerGrowSpeed) {
-            powerGrowTick = 0;
-            changePower(1);
-        }
-    }
-
     // player rendering
     public void render(Graphics g, int lvlOffset) {
-        int aniStateForDrawing = state;
-        if (state == ATTACK || powerAttackActive) {
-            if (moving) {
-                aniStateForDrawing = RUNNING;
-            } else {
-                aniStateForDrawing = IDLE;
-            }
-        }
-
-        g.drawImage(animations[playerCharacter.getRowIndex(aniStateForDrawing)][aniIndex], (int) (hitbox.x - playerCharacter.xDrawOffset) - lvlOffset + flipX, (int) (hitbox.y - playerCharacter.yDrawOffset + (int) (pushDrawOffset)), width * flipW, height, null);
-//        drawHitbox(g, lvlOffset);
+        g.drawImage(animations[PlayerCharacter.FROG.getRowIndex(state)][aniIndex], (int) (hitbox.x - PlayerCharacter.FROG.xDrawOffset) - lvlOffset + flipX, (int) (hitbox.y - PlayerCharacter.FROG.yDrawOffset + (int) (pushDrawOffset)), width * flipW, height, null);//        drawHitbox(g, lvlOffset);
         drawUI(g);
     }
 
     // ui rendering
     private void drawUI(Graphics g) {
-        g.drawImage(statusBarImg, statusBarX, statusBarY, statusBarWidth, statusBarHeight, null);
+        int heartIconX = (int) (20 * Game.SCALE); // New X position for the heart icon
+        int heartIconY = (int) (20 * Game.SCALE); // New Y position for the heart icon
 
-        // health
-        // This block now draws the animated heart instead of the static lifeIcon
         if (heartAnimations != null && heartAnimations.length > 0 && heartAnimations[heartAnimationFrame] != null) {
-            int iconX = healthBarXStart + statusBarX;
-            int iconY = healthBarYStart + statusBarY;
-            int iconSize = (int)(100 * Game.SCALE); // Still used for text alignment
-
-            g.drawImage(heartAnimations[heartAnimationFrame], // Draw animated frame
-                        iconX, // Use same X as old lifeIcon
-                        iconY, // Use same Y as old lifeIcon
-                        (int)(HEART_SPRITE_WIDTH * Game.SCALE),  // Scaled width of animated heart
-                        (int)(HEART_SPRITE_HEIGHT * Game.SCALE), // Scaled height of animated heart
-                        null);
+            // Draw the heart animation frame
+            g.drawImage(heartAnimations[heartAnimationFrame],
+                    heartIconX,
+                    heartIconY,
+                    (int) (HEART_SPRITE_WIDTH * Game.SCALE),
+                    (int) (HEART_SPRITE_HEIGHT * Game.SCALE),
+                    null);
 
             g.setColor(Color.WHITE);
-            g.setFont(new Font("Jersey15-Regular", Font.BOLD, (int)(24 * Game.SCALE)));
+            g.setFont(new Font("Jersey15-Regular", Font.BOLD, (int) (24 * Game.SCALE)));
 
-            int textX = iconX + (int) (HEART_SPRITE_WIDTH * Game.SCALE) + (int) (5 * Game.SCALE);
-            int textY = iconY + (int) (HEART_SPRITE_HEIGHT * Game.SCALE / 2) + (int) (g.getFontMetrics().getAscent() / 2) - (int) (g.getFontMetrics().getDescent() / 2);
-            
+            // Position the text "x" + lives next to the heart
+            int textX = heartIconX + (int) (HEART_SPRITE_WIDTH * Game.SCALE) + (int) (5 * Game.SCALE);
+            int textY = heartIconY + (int) (HEART_SPRITE_HEIGHT * Game.SCALE / 2) + (int) (g.getFontMetrics().getAscent() / 2) - (int) (g.getFontMetrics().getDescent() / 2);
+
             g.drawString("x" + lives, textX, textY);
-        } else if (lifeIcon != null) { // Fallback if heart animations failed to load, draw static lifeIcon
-             int iconX = healthBarXStart + statusBarX;
-             int iconY = healthBarYStart + statusBarY;
-             int iconSize = (int)(100 * Game.SCALE);
-             g.drawImage(lifeIcon, iconX, iconY, iconSize, iconSize, null);
+        } else if (lifeIcon != null) { // Fallback if animated heart is not loaded
+            int fallbackIconSize = (int) (20 * Game.SCALE); // You might need to adjust this size
+            g.drawImage(lifeIcon, heartIconX, heartIconY, fallbackIconSize, fallbackIconSize, null);
 
-             g.setColor(Color.WHITE);
-             g.setFont(new Font("Jersey15-Regular", Font.BOLD, (int)(24 * Game.SCALE)));
-             int textX = iconX + iconSize + (int)(1 * Game.SCALE);
-             int textY = iconY + (int)(iconSize / 2) + (int)(g.getFontMetrics().getAscent() / 2) - (int)(g.getFontMetrics().getDescent() / 2);
-             g.drawString("x" + lives, textX, textY);
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("Jersey15-Regular", Font.BOLD, (int) (24 * Game.SCALE)));
+
+            // Position the text "x" + lives next to the fallback icon
+            int textX = heartIconX + fallbackIconSize + (int) (5 * Game.SCALE);
+            int textY = heartIconY + (int) (fallbackIconSize / 2) + (int) (g.getFontMetrics().getAscent() / 2) - (int) (g.getFontMetrics().getDescent() / 2);
+            g.drawString("x" + lives, textX, textY);
         }
     }
 
@@ -314,10 +188,8 @@ public class Player extends Entity {
         if (aniTick >= ANI_SPEED) {
             aniTick = 0;
             aniIndex++;
-            if (aniIndex >= playerCharacter.getSpriteAmount(state)) {
+            if (aniIndex >= PlayerCharacter.FROG.getSpriteAmount(state)) {
                 aniIndex = 0;
-                attacking = false;
-                attackChecked = false;
                 if (state == HIT) {
                     newState(IDLE);
                     airSpeed = 0f;
@@ -328,7 +200,6 @@ public class Player extends Entity {
         }
     }
 
-    // --- NEW: Method to update the heart animation frames ---
     private void updateHeartAnimation() {
         heartAnimationTick++;
         if (heartAnimationTick >= HEART_ANIM_SPEED) { // Uses HEART_ANIM_SPEED from Constants.UI
@@ -339,8 +210,6 @@ public class Player extends Entity {
             }
         }
     }
-    // --- END NEW ---
-
     // animation state setting
     private void setAnimation() {
         int startAni = state;
@@ -359,22 +228,7 @@ public class Player extends Entity {
             else
                 state = FALLING;
         }
-
-        if (powerAttackActive) {
-            state = ATTACK;
-            aniIndex = 1;
-            aniTick = 0;
-            return;
-        }
-
-        if (attacking) {
-            state = ATTACK;
-            if (startAni != ATTACK) {
-                aniIndex = 1;
-                aniTick = 0;
-                return;
-            }
-        }
+        
         if (startAni != state)
             resetAniTick();
     }
@@ -402,18 +256,6 @@ public class Player extends Entity {
             xSpeed += walkSpeed;
             flipX = 0;
             flipW = 1;
-        }
-
-        if (powerAttackActive) {
-            // If power attack is active, force movement in current direction
-            if ((!left && !right) || (left && right)) { // If no specific direction pressed, use facing direction
-                if (flipW == -1) {
-                    xSpeed = -walkSpeed;
-                } else {
-                    xSpeed = walkSpeed;
-                }
-            }
-            xSpeed *= 3; // Boost speed for power attack
         }
 
         // --- Vertical Gravity Application & Initial In-Air Check ---
@@ -476,10 +318,6 @@ public class Player extends Entity {
             hitbox.x += xSpeed;
         else {
             hitbox.x = GetEntityXPosNextToWall(hitbox, xSpeed);
-            if (powerAttackActive) {
-                powerAttackActive = false;
-                powerAttackTick = 0;
-            }
         }
     }
 
@@ -524,12 +362,6 @@ public class Player extends Entity {
         }
     }
 
-    // power change
-    public void changePower(int value) {
-        powerValue += value;
-        powerValue = Math.max(Math.min(powerValue, powerMaxValue), 0);
-    }
-
     // level data loading
     public void loadLvlData(int[][] lvlData) {
         this.lvlData = lvlData;
@@ -543,10 +375,6 @@ public class Player extends Entity {
         right = false;
     }
 
-    // attacking setter
-    public void setAttacking(boolean attacking) {
-        this.attacking = attacking;
-    }
 
     // left getter
     public boolean isLeft() {
@@ -577,46 +405,22 @@ public class Player extends Entity {
     public void resetAll() {
         resetDirBooleans();
         inAir = false;
-        attacking = false;
         moving = false;
         airSpeed = 0f;
         state = IDLE;
-        // health reset
         lives = MAX_LIVES; // reset lives to full
-        dead = false; // reset death status
-        powerAttackActive = false;
-        powerAttackTick = 0;
-        powerValue = powerMaxValue;
+        dead = false; // reset death status 
 
         hitbox.x = x;
         hitbox.y = y;
-        resetAttackBox();
 
         if (!IsEntityOnFloor(hitbox, lvlData))
             inAir = true;
     }
 
-    // attack box reset
-    private void resetAttackBox() {
-        if (flipW == 1)
-            setAttackBoxOnRightSide();
-        else
-            setAttackBoxOnLeftSide();
-    }
-
     // tile y getter
     public int getTileY() {
         return tileY;
-    }
-
-    // power attack activation
-    public void powerAttack() {
-        if (powerAttackActive)
-            return;
-        if (powerValue >= 60) {
-            powerAttackActive = true;
-            changePower(-60);
-        }
     }
 
     // player status getters

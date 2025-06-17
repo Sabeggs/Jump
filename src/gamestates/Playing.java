@@ -90,12 +90,6 @@ public class Playing extends State implements Statemethods {
 
     private void loadDialogue() {
         loadDialogueImgs();
-
-        // Load dialogue array with premade objects, that gets activated when needed.
-        // This is a simple
-        // way of avoiding ConcurrentModificationException error. (Adding to a list that
-        // is being looped through.
-
         for (int i = 0; i < 10; i++)
             dialogEffects.add(new DialogueEffect(0, 0, EXCLAMATION));
         for (int i = 0; i < 10; i++)
@@ -138,44 +132,37 @@ public class Playing extends State implements Statemethods {
         levelManager = new LevelManager(game);
         enemyManager = new EnemyManager(this);
         objectManager = new ObjectManager(this);
-
-
+        
+        player = new Player(PlayerCharacter.FROG, this);
+        
         pauseOverlay = new PauseOverlay(this);
         gameOverOverlay = new GameOverOverlay(this);
         levelCompletedOverlay = new LevelCompletedOverlay(this);
         gameCompletedOverlay = new GameCompletedOverlay(this);
 
         rain = new Rain();
-    }
-
-    public void setPlayerCharacter(PlayerCharacter pc) {
-
-        player = new Player(pc, this);
+        
         player.loadLvlData(levelManager.getCurrentLevel().getLevelData());
         player.setSpawn(levelManager.getCurrentLevel().getPlayerSpawn());
     }
 
     @Override
 public void update() {
-    // --- Timer Update Logic (keep this as is) ---
-    if (!paused && !lvlCompleted && !gameOver && !playerDying) { // Timer runs only when not paused, level completed, game over, or player dying
+    if (!paused && !lvlCompleted && !gameOver && !playerDying) { 
         long now = System.nanoTime();
         long elapsedTimeNanos = now - lastTimerUpdateNanos;
-        totalGameTimeMillis += elapsedTimeNanos / 1_000_000; // Convert nanoseconds to milliseconds
+        totalGameTimeMillis += elapsedTimeNanos / 1_000_000; 
         lastTimerUpdateNanos = now;
     } else {
-        // When paused, level completed, game over, or player dying, update lastTimerUpdateNanos to avoid a time jump when resuming
         lastTimerUpdateNanos = System.nanoTime();
     }
-    // --- End Timer Update Logic ---
 
     if (paused) {
         pauseOverlay.update();
     } else if (lvlCompleted) {
         levelCompletedOverlay.update();
     } else if (gameCompleted) {
-        // --- THIS IS THE NEW / EDITED PART ---
-        gameCompletedOverlay.update(); // Allow the game completed overlay to update (e.g., for animations)
+        gameCompletedOverlay.update(); 
 
         if (Gamestate.state != Gamestate.REGISTER) {
             game.getAudioPlayer().stopSong(); 
@@ -184,13 +171,11 @@ public void update() {
             Gamestate.state = Gamestate.REGISTER;
 
         }
-        // --- END NEW / EDITED PART ---
     } else if (gameOver) {
         gameOverOverlay.update();
     } else if (playerDying) {
         player.update();
     } else {
-        // Normal gameplay update
         updateDialogue();
         if (drawRain)
             rain.update(xLvlOffset);
@@ -240,7 +225,6 @@ public void update() {
     }
 
     public void addDialogue(int x, int y, int type) {
-        // Not adding a new one, we are recycling. #ThinkGreen lol
         dialogEffects.add(new DialogueEffect(x, y - (int) (Game.SCALE * 15), type));
         for (DialogueEffect de : dialogEffects)
             if (!de.isActive())
@@ -280,12 +264,8 @@ public void draw(Graphics g) {
     objectManager.drawBackgroundTrees(g, xLvlOffset);
     drawDialogue(g, xLvlOffset);
 
-    // --- Draw Timer Logic ---
     drawGameTimer(g);
-    // --- End Draw Timer Logic ---
 
-    // Drawing overlays after the timer ensures they cover the game world and timer
-    // when active (paused, game over, etc.).
     if (paused) {
         g.setColor(new Color(0, 0, 0, 150));
         g.fillRect(0, 0, Game.GAME_WIDTH, Game.GAME_HEIGHT);
@@ -298,28 +278,20 @@ public void draw(Graphics g) {
         gameCompletedOverlay.draw(g);
 }
 
-// --- New Helper Method for Drawing the Timer ---
 private void drawGameTimer(Graphics g) {
-    // Convert total milliseconds to minutes and seconds for display
     long totalSeconds = totalGameTimeMillis / 1000;
     long minutes = totalSeconds / 60;
     long seconds = totalSeconds % 60;
-    // long milliseconds = totalGameTimeMillis % 1000; // Uncomment if you want to show milliseconds
 
-    // Format the time string (e.g., "00:00")
     String timeString = String.format("%02d:%02d", minutes, seconds);
-    // If you want milliseconds: String timeString = String.format("%02d:%02d.%03d", minutes, seconds, milliseconds);
 
-    g.setColor(Color.WHITE); // Choose your desired color for the text
-    
-    // Adjust font size and style as needed, scaling with Game.SCALE for consistency
-    // Assuming Game.SCALE is accessible and used for scaling UI elements
+    g.setColor(Color.WHITE);
+
     g.setFont(new Font("Arial", Font.BOLD, (int)(24 * Game.SCALE))); 
 
-    // Position the timer on the screen (adjust x and y as per your UI design)
-    // Example: Top-right corner, with some padding
-    int xPos = (int)(Game.GAME_WIDTH - 150 * Game.SCALE); // Adjust 150 based on text length and desired right margin
-    int yPos = (int)(40 * Game.SCALE); // Adjust for top margin
+
+    int xPos = (int)(Game.GAME_WIDTH - 150 * Game.SCALE); 
+    int yPos = (int)(40 * Game.SCALE); 
 
     g.drawString("Time: " + timeString, xPos, yPos);
 }
@@ -360,7 +332,7 @@ private void drawGameTimer(Graphics g) {
         playerDying = false;
         drawRain = false;
 
-        setDrawRainBoolean();
+//        setDrawRainBoolean();
 
         player.resetAll();
         enemyManager.resetAllEnemies();
@@ -369,7 +341,6 @@ private void drawGameTimer(Graphics g) {
     }
 
     private void setDrawRainBoolean() {
-        // This method makes it rain 20% of the time you load a level.
         if (rnd.nextFloat() >= 0.9f)
             drawRain = true;
     }
@@ -397,10 +368,7 @@ private void drawGameTimer(Graphics g) {
     @Override
     public void mouseClicked(MouseEvent e) {
         if (!gameOver) {
-            if (e.getButton() == MouseEvent.BUTTON1)
-                player.setAttacking(true);
-            else if (e.getButton() == MouseEvent.BUTTON3)
-                player.powerAttack();
+
         }
     }
 
@@ -424,11 +392,7 @@ private void drawGameTimer(Graphics g) {
     }
     
     @Override
-    public void keyTyped(KeyEvent e) {
-        // No specific typing logic typically needed for the main game (Playing) screen,
-        // so leave empty unless you have a specific reason to process typed characters here.
-        // This method is required because Statemethods now defines it.
-    }
+    public void keyTyped(KeyEvent e) { }
 
     @Override
     public void keyReleased(KeyEvent e) {
@@ -492,7 +456,6 @@ private void drawGameTimer(Graphics g) {
     public void setLevelCompleted(boolean levelCompleted) {
         game.getAudioPlayer().lvlCompleted();
         if (levelManager.getLevelIndex() + 1 >= levelManager.getAmountOfLevels()) {
-            // No more levels
             gameCompleted = true;
             levelManager.setLevelIndex(0);
             levelManager.loadNextLevel();

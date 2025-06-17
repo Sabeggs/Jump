@@ -18,7 +18,6 @@ public class Game implements Runnable {
 
     private Playing playing;
     private Menu menu;
-    private PlayerSelection playerSelection;
     private Register register;
     private GameOptions gameOptions;
     private AudioOptions audioOptions;
@@ -49,7 +48,6 @@ public class Game implements Runnable {
         audioPlayer = new AudioPlayer();
         menu = new Menu(this);
         playing = new Playing(this);
-        playerSelection = new PlayerSelection(this);
         leaderboard = new Leaderboard(this);
         gameOptions = new GameOptions(this);
         register = new Register(this);
@@ -61,7 +59,7 @@ public class Game implements Runnable {
     }
     
     public void StartNewGame() {
-        playing.resetAll();
+        playing.startNewGameSession();
         Gamestate.state = Gamestate.PLAYING; 
         getAudioPlayer().playSong(AudioPlayer.LEVEL_1);
     }
@@ -69,7 +67,6 @@ public class Game implements Runnable {
     public void update() {
         switch (Gamestate.state) {
             case MENU -> menu.update();
-            case PLAYER_SELECTION -> playerSelection.update();
             case PLAYING -> playing.update();
             case OPTIONS -> gameOptions.update();
             case REGISTER -> register.update();
@@ -81,7 +78,6 @@ public class Game implements Runnable {
     public void render(Graphics g) {
         switch (Gamestate.state) {
             case MENU -> menu.draw(g);
-            case PLAYER_SELECTION -> playerSelection.draw(g);
             case PLAYING -> playing.draw(g);
             case OPTIONS -> gameOptions.draw(g);
             case REGISTER -> register.draw(g);
@@ -147,9 +143,6 @@ public class Game implements Runnable {
 
     public Leaderboard getLeaderboard() {
         return leaderboard;
-    }
-    public PlayerSelection getPlayerSelection() {
-        return playerSelection;
     }
 
     public GameOptions getGameOptions() {

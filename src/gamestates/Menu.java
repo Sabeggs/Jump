@@ -115,28 +115,29 @@ public class Menu extends State implements Statemethods {
         }
     }
 
-  @Override
+    @Override
     public void mouseReleased(MouseEvent e) {
-        for (MenuButton mb : buttons) { // Assuming 'buttons' is an array/list of your menu buttons
-            if (isIn(e, mb)) { // 'isIn' is likely a helper method to check if mouse is over button
-
+        for (MenuButton mb : buttons) {
+            if (isIn(e, mb)) {
                 if (mb.isMousePressed()) {
-                    // This is where we add the new line.
-                    // We check if the button being released is the "PLAYING" button.
                     if (mb.getState() == Gamestate.PLAYING) {
-                        // --- ADD THIS LINE HERE ---
-                        game.getPlaying().setPlayerCharacter(PlayerCharacter.FROG);
-                        // -------------------------
+                        // Instead of just setting the state, call the comprehensive start method
+                        game.StartNewGame(); // <--- CHANGE HERE!
+                    } else {
+                        // For all other buttons (Register, Leaderboard, Quit), use the existing logic
+                        mb.applyGamestate();
                     }
-                    mb.applyGamestate(); // This line sets the actual game state (e.g., Gamestate.PLAYING)
                 }
 
-                // This line sets the level song. It's fine where it is,
-                // as it will execute if the button's state is PLAYING (which it will be after applyGamestate for that button).
-                if (mb.getState() == Gamestate.PLAYING)
-                    game.getAudioPlayer().setLevelSong(game.getPlaying().getLevelManager().getLevelIndex());
-
-                break; // Exit loop after handling the button
+                // Note: The line below will still execute for the PLAYING button *if*
+                // StartNewGame() doesn't completely replace its functionality.
+                // However, since StartNewGame() already plays LEVEL_1 song, this line
+                // might be redundant or even problematic if it tries to set the song
+                // to a different level index immediately.
+                // For now, let's keep it and see. We can remove it later if it causes issues.
+                // if (mb.getState() == Gamestate.PLAYING)
+                //     game.getAudioPlayer().setLevelSong(game.getPlaying().getLevelManager().getLevelIndex());
+                break;
             }
         }
         resetButtons();

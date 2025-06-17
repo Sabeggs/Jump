@@ -8,21 +8,8 @@ import mainn.Game;
 
 public enum PlayerCharacter {
 
-    PIRATE(5, 6, 3, 1, 3, 4, 8,
-            0, 1, 2, 3, 4, 5, 6,
-            LoadSave.PLAYER_PIRATE, 7, 8, 64, 40,
-            20, 27, 21, 4),
-    ORC(6, 8, 8, 8, 6, 4, 4,
-            0, 1, 1, 1, 2, 4, 5,
-            LoadSave.PLAYER_ORC, 6, 8, 100, 100,
-            13, 15, 44, 42),
-    SOLDIER(6, 8, 8, 8, 6, 4, 4,
-            0, 1, 1, 1, 2, 5, 6,
-            LoadSave.PLAYER_SOLDIER, 7, 8, 100, 100,
-            12, 18, 44, 39),
-
-    FROG(11, 12, 1, 1, 1, 7, 1, 
-            IDLE, RUNNING, JUMP, FALLING, ATTACK, HIT, DEAD,
+    FROG(11, 12, 1,  1, 7, 1, 
+            IDLE, RUNNING, JUMP, FALLING, HIT, DEAD,
             "", 
             DEAD + 1, 0,
             32, 32,
@@ -30,8 +17,8 @@ public enum PlayerCharacter {
             6, 5);
 
 
-    public int spriteA_IDLE, spriteA_RUNNING, spriteA_JUMP, spriteA_FALLING, spriteA_ATTACK, spriteA_HIT, spriteA_DEAD;
-    public int rowIDLE, rowRUNNING, rowJUMP, rowFALLING, rowATTACK, rowHIT, rowDEAD;
+    public int spriteA_IDLE, spriteA_RUNNING, spriteA_JUMP, spriteA_FALLING, spriteA_HIT, spriteA_DEAD;
+    public int rowIDLE, rowRUNNING, rowJUMP, rowFALLING, rowHIT, rowDEAD;
     public String playerAtlas;
     public int rowA, colA;
     public int spriteW, spriteH;
@@ -44,17 +31,16 @@ public enum PlayerCharacter {
      private float yDrawOffset = 4 * Game.SCALE;
      */
 
-    PlayerCharacter(int spriteA_IDLE, int spriteA_RUNNING, int spriteA_JUMP, int spriteA_FALLING, int spriteA_ATTACK, int spriteA_HIT, int spriteA_DEAD,
-                    int rowIDLE, int rowRUNNING, int rowJUMP, int rowFALLING, int rowATTACK, int rowHIT, int rowDEAD,
-                    String playerAtlas, int rowA, int colA, int spriteW, int spriteH,
-                    int hitboxW, int hitboxH,
-                    int xDrawOffset, int yDrawOffset) {
+    PlayerCharacter(int spriteA_IDLE, int spriteA_RUNNING, int spriteA_JUMP, int spriteA_FALLING, int spriteA_HIT, int spriteA_DEAD, // Removed spriteA_ATTACK parameter
+            int rowIDLE, int rowRUNNING, int rowJUMP, int rowFALLING, int rowHIT, int rowDEAD, // Removed rowATTACK parameter
+            String playerAtlas, int rowA, int colA, int spriteW, int spriteH,
+            int hitboxW, int hitboxH,
+            int xDrawOffset, int yDrawOffset) {
 
         this.spriteA_IDLE = spriteA_IDLE;
         this.spriteA_RUNNING = spriteA_RUNNING;
         this.spriteA_JUMP = spriteA_JUMP;
         this.spriteA_FALLING = spriteA_FALLING;
-        this.spriteA_ATTACK = spriteA_ATTACK;
         this.spriteA_HIT = spriteA_HIT;
         this.spriteA_DEAD = spriteA_DEAD;
 
@@ -62,7 +48,6 @@ public enum PlayerCharacter {
         this.rowRUNNING = rowRUNNING;
         this.rowJUMP = rowJUMP;
         this.rowFALLING = rowFALLING;
-        this.rowATTACK = rowATTACK;
         this.rowHIT = rowHIT;
         this.rowDEAD = rowDEAD;
 
@@ -85,7 +70,6 @@ public enum PlayerCharacter {
             case RUNNING -> spriteA_RUNNING;
             case JUMP -> spriteA_JUMP;
             case FALLING -> spriteA_FALLING;
-            case ATTACK -> spriteA_ATTACK;
             case HIT -> spriteA_HIT;
             case DEAD -> spriteA_DEAD;
             default -> 1;
@@ -98,7 +82,6 @@ public enum PlayerCharacter {
             case RUNNING -> rowRUNNING;
             case JUMP -> rowJUMP;
             case FALLING -> rowFALLING;
-            case ATTACK -> rowATTACK;
             case HIT -> rowHIT;
             case DEAD -> rowDEAD;
             default -> 1;

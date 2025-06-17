@@ -19,11 +19,7 @@ import static utilz.Constants.PlayerConstants.*; // Import PlayerConstants for a
 
 public class LoadSave {
 
-    // --- Image Path Constants ---
-    public static final String PLAYER_PIRATE = "/res/player_sprites.png";
-    public static final String PLAYER_ORC = "/res/player_orc.png";
-    public static final String PLAYER_SOLDIER = "/res/player_soldier.png";
-    // NEW FROG ANIMATION CONSTANTS
+    // frog stuff
     public static final String FROG_IDLE = "/res/Frog_Idle.png";
     public static final String FROG_RUN = "/res/Frog_Run.png";
     public static final String FROG_JUMP = "/res/Frog_Jump.png";
@@ -44,7 +40,6 @@ public class LoadSave {
     public static final String BIG_CLOUDS = "/res/big_clouds.png";
     public static final String SMALL_CLOUDS = "/res/small_clouds.png";
     public static final String CRABBY_SPRITE = "/res/crabby_sprite.png";
-    public static final String STATUS_BAR = "/res/health_power_bar.png";
     public static final String COMPLETED_IMG = "/res/completed_sprite.png";
     public static final String POTION_ATLAS = "/res/potions_sprites.png";
     public static final String CONTAINER_ATLAS = "/res/objects_sprites.png";
@@ -85,36 +80,16 @@ public class LoadSave {
         BufferedImage[][] animations = new BufferedImage[numPlayerActions][];
 
         switch (pc) {
-            case PIRATE:
-            case ORC:
-            case SOLDIER:
-                // Existing logic for characters that use a single spritesheet
-                BufferedImage img = GetSpriteAtlas(pc.playerAtlas);
-                if (img == null) {
-                    System.err.println("Failed to load player atlas for: " + pc.playerAtlas);
-                    return new BufferedImage[0][0];
-                }
-                animations = new BufferedImage[pc.rowA][pc.colA];
-                for (int j = 0; j < animations.length; j++)
-                    for (int i = 0; i < animations[j].length; i++)
-                        animations[j][i] = img.getSubimage(i * pc.spriteW, j * pc.spriteH, pc.spriteW, pc.spriteH);
-                break;
 
             case FROG:
                 int frogSpriteW = pc.spriteW;
                 int frogSpriteH = pc.spriteH;
-               animations[IDLE] = cutSheet(GetSpriteAtlas(FROG_IDLE), pc.getSpriteAmount(IDLE), frogSpriteW, frogSpriteH);
+                animations[IDLE] = cutSheet(GetSpriteAtlas(FROG_IDLE), pc.getSpriteAmount(IDLE), frogSpriteW, frogSpriteH);
 
-                // RUNNING (12 frames)
                 animations[RUNNING] = cutSheet(GetSpriteAtlas(FROG_RUN), pc.getSpriteAmount(RUNNING), frogSpriteW, frogSpriteH);
-
-                // JUMP (1 frame)
                 animations[JUMP] = cutSheet(GetSpriteAtlas(FROG_JUMP), pc.getSpriteAmount(JUMP), frogSpriteW, frogSpriteH);
-
-                
                 animations[FALLING] = cutSheet(GetSpriteAtlas(FROG_FALL), pc.getSpriteAmount(FALLING), frogSpriteW, frogSpriteH);
                 animations[HIT] = cutSheet(GetSpriteAtlas(FROG_HIT), pc.getSpriteAmount(HIT), frogSpriteW, frogSpriteH);
-                animations[ATTACK] = cutSheet(GetSpriteAtlas(FROG_RUN), pc.getSpriteAmount(ATTACK), frogSpriteW, frogSpriteH);
                 animations[DEAD] = cutSheet(GetSpriteAtlas(FROG_IDLE), pc.getSpriteAmount(DEAD), frogSpriteW, frogSpriteH);
 
                 break;
@@ -183,10 +158,10 @@ public class LoadSave {
 
         for (int i = 0; i < HEART_SPRITE_FRAMES; i++) {
             heartFrames[i] = heartSheet.getSubimage(
-                    i * HEART_SPRITE_WIDTH, // X-coordinate for the current frame
-                    0, // Y-coordinate (assuming frames are in one row)
-                    HEART_SPRITE_WIDTH, // Width of a single frame
-                    HEART_SPRITE_HEIGHT // Height of a single frame
+                    i * HEART_SPRITE_WIDTH, 
+                    0, 
+                    HEART_SPRITE_WIDTH,
+                    HEART_SPRITE_HEIGHT 
             );
         }
         return heartFrames;

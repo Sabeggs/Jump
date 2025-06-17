@@ -233,15 +233,13 @@ public class Constants {
 		public static final int SMALL_CLOUD_HEIGHT = (int) (SMALL_CLOUD_HEIGHT_DEFAULT * Game.SCALE);
 	}
 
-	   public static class UI { // This is the start of your UI class
-        // --- ADD OR CONFIRM THESE NEW HEART CONSTANTS ARE HERE ---
+	   public static class UI { 
 
         public static final String HEART_SPRITE_SHEET = "/res/heart_animation.png"; // Make sure this path is correct!
         public static final int HEART_SPRITE_WIDTH = 18;
         public static final int HEART_SPRITE_HEIGHT = 14;
         public static final int HEART_SPRITE_FRAMES = 8;
         public static final int HEART_ANIM_SPEED = 15;
-        // --- END OF HEART CONSTANTS ---
 
         public static class Buttons {
 
@@ -288,7 +286,6 @@ public class Constants {
 		public static final int RUNNING = 1;
 		public static final int JUMP = 2;
 		public static final int FALLING = 3;
-		public static final int ATTACK = 4;
 		public static final int HIT = 5;
 		public static final int DEAD = 6;
 

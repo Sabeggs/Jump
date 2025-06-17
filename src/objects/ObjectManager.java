@@ -71,7 +71,7 @@ public class ObjectManager {
         if (p.getObjType() == RED_POTION)
             playing.getPlayer().addLife(RED_POTION_VALUE);
         else
-            playing.getPlayer().changePower(BLUE_POTION_VALUE);
+            playing.getPlayer().addLife(BLUE_POTION_VALUE);
     }
 
     public void checkObjectHit(Rectangle2D.Float attackbox) {
