@@ -12,33 +12,45 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.awt.image.BufferedImage; 
-import utilz.LoadSave;   
+import java.awt.image.BufferedImage;
+import utilz.LoadSave;
+import java.awt.FontFormatException;
+import java.io.InputStream;
 
 
 import mainn.Game; // Assuming mainn is your base package for Game
 
 public class Register extends State implements Statemethods {
 
+    private Font customInputFont;
+    private Font titleFont;
+    
     // --- Game Data ---
-    private long finalGameTimeMillis = 0; // Stores the final time to be saved
+    private long finalGameTimeMillis = 0;
 
     // --- UI Elements for Input ---
     private StringBuilder usernameInput = new StringBuilder();
-    private boolean inputActive = true; 
-    private int maxUsernameLength = 30; 
+    private boolean inputActive = true;
+    private int maxUsernameLength = 13;
     private boolean shouldTransitionToMenu = false;
 
     // --- UI Element Bounds (positions and sizes) ---
     private int inputBoxX, inputBoxY, inputBoxWidth, inputBoxHeight;
     private int submitButtonX, submitButtonY, submitButtonWidth, submitButtonHeight;
-    private int backButtonX, backButtonY, backButtonWidth, backButtonHeight; // New back button
-    
+    private int backButtonX, backButtonY, backButtonWidth, backButtonHeight;
+
     // --- Image Loading ---
     private BufferedImage inputBoxImage;
-    private BufferedImage submitButtonImage;
-    private BufferedImage backButtonImage;
+    private BufferedImage submitButtonNormalImage; // Renamed for clarity
+    private BufferedImage submitButtonPressedImage; // NEW: Image for when submit button is pressed
+    private BufferedImage backButtonNormalImage;   // Renamed for clarity
+    private BufferedImage backButtonPressedImage;   // NEW: Image for when back button is pressed
+    private BufferedImage registerBackgroundImg;
     
+    // --- Button State Tracking --- // NEW: Flags to track if a button is currently being held down
+    private boolean isSubmitPressed = false;
+    private boolean isBackPressed = false;
+
     // --- Feedback Message for User ---
     private String feedbackMessage = ""; // Displays messages like "Saving...", "Success!", "Error!"
     private long messageDisplayEndTime = 0; // Time when message should disappear
@@ -51,15 +63,53 @@ public class Register extends State implements Statemethods {
     public Register(Game game) {
         super(game);
         loadImages();
+        loadFonts();
         initUIBounds();
+    }
+    
+    private void loadFonts() {
+        try {
+            InputStream is = getClass().getResourceAsStream("/fonts/dogicapixel.ttf");
+            if (is != null) {
+                customInputFont = Font.createFont(Font.TRUETYPE_FONT, is);
+                customInputFont = customInputFont.deriveFont(Font.PLAIN, (float) (16 * Game.SCALE)); // Use float for deriveFont size
+
+                is.close(); // Close the input stream
+            } else {
+                System.err.println("Font file 'dogicapixel.ttf' not found. Make sure it's in your resources folder.");
+                customInputFont = new Font("Arial", Font.PLAIN, (int) (24 * Game.SCALE));
+            }
+            
+            InputStream isTitle = getClass().getResourceAsStream("/fonts/Jersey15-Regular.ttf"); // Adjust path if necessary
+            if (isTitle != null) {
+                titleFont = Font.createFont(Font.TRUETYPE_FONT, isTitle);
+                // Derive the font to the desired size and style for the title (e.g., BOLD, 48 * Game.SCALE)
+                titleFont = titleFont.deriveFont(Font.BOLD, (float) (36 * Game.SCALE));
+                isTitle.close();
+            } else {
+                System.err.println("Font file 'Jersey15-Regular.ttf' not found. Using default font for title.");
+                titleFont = new Font("Arial", Font.BOLD, (int) (48 * Game.SCALE)); // Fallback
+            }
+            
+        } catch (FontFormatException | IOException e) {
+            System.err.println("Error loading font 'dogicapixel.ttf': " + e.getMessage());
+            e.printStackTrace();
+            customInputFont = new Font("Arial", Font.PLAIN, (int) (24 * Game.SCALE));
+        }
     }
 
     private void loadImages() {
-    inputBoxImage = LoadSave.GetSpriteAtlas(LoadSave.REGISTER_INPUT_BG); // Example constant
-    submitButtonImage = LoadSave.GetSpriteAtlas(LoadSave.REGISTER_SUBMIT_BUTTON); // Example constant
-    backButtonImage = LoadSave.GetSpriteAtlas(LoadSave.REGISTER_BACK_BUTTON); // Example constant
+        inputBoxImage = LoadSave.GetSpriteAtlas(LoadSave.REGISTER_INPUT_BG);
+        // Load normal state images
+        submitButtonNormalImage = LoadSave.GetSpriteAtlas(LoadSave.REGISTER_SUBMIT_BUTTON); // Original button image
+        backButtonNormalImage = LoadSave.GetSpriteAtlas(LoadSave.REGISTER_BACK_BUTTON);   // Original button image
+
+        // NEW: Load pressed state images (You'll need to create these image files and LoadSave constants)
+        submitButtonPressedImage = LoadSave.GetSpriteAtlas(LoadSave.REGISTER_SUBMIT_BUTTON_PRESSED);
+        backButtonPressedImage = LoadSave.GetSpriteAtlas(LoadSave.REGISTER_BACK_BUTTON_PRESSED);
+        registerBackgroundImg = LoadSave.GetSpriteAtlas(LoadSave.REGISTER_MAIN_BACKGROUND);
     }
-    
+
     // Initialize the bounds for all UI elements
     private void initUIBounds() {
         // Adjust these values based on your screen size (Game.GAME_WIDTH, Game.GAME_HEIGHT)
@@ -71,14 +121,14 @@ public class Register extends State implements Statemethods {
 
         // Adjust for the submit button
         submitButtonWidth = (int)(120 * Game.SCALE);
-        submitButtonHeight = (int)(40 * Game.SCALE);
+        submitButtonHeight = (int)(submitButtonWidth / 2);
         submitButtonX = Game.GAME_WIDTH / 2 - submitButtonWidth / 2;
         submitButtonY = (int)(inputBoxY + inputBoxHeight + 30 * Game.SCALE);
 
         // Adjust for a back button (optional, but good for navigation)
         backButtonWidth = (int)(100 * Game.SCALE);
-        backButtonHeight = (int)(30 * Game.SCALE);
-        backButtonX = (int)(20 * Game.SCALE); // Top-left corner
+        backButtonHeight = (int)(backButtonWidth / 2);
+        backButtonX = (int)(20 * Game.SCALE);
         backButtonY = (int)(20 * Game.SCALE);
     }
 
@@ -88,13 +138,12 @@ public class Register extends State implements Statemethods {
         if (!feedbackMessage.isEmpty() && System.currentTimeMillis() > messageDisplayEndTime) {
             feedbackMessage = "";
         }
-
-        // ADD THIS NEW LOGIC: Check if we should transition to the menu
-        // This will happen only after the feedback message has faded out (feedbackMessage.isEmpty())
+        
+        // Check if we should transition to the menu (only after feedback message has faded)
         if (shouldTransitionToMenu && feedbackMessage.isEmpty()) {
             Gamestate.state = Gamestate.MENU; // Change state to main menu
             shouldTransitionToMenu = false; // Reset the flag
-            
+
             // It's good practice to reset the input field and active status
             usernameInput.setLength(0); // Clear the username for next time
             inputActive = false; // Deactivate the input box
@@ -104,21 +153,40 @@ public class Register extends State implements Statemethods {
 
     @Override
     public void draw(Graphics g) {
-        // Draw a semi-transparent black background over the whole screen
-        g.setColor(new Color(0, 0, 0, 180));
-        g.fillRect(0, 0, Game.GAME_WIDTH, Game.GAME_HEIGHT);
+        if (registerBackgroundImg != null) {
+            float stretchFactorX = 1.2f; // Make it 20% wider than the screen
+            float stretchFactorY = 1.55f; // Make it 20% taller than the screen
+
+            // Calculate the new stretched dimensions
+            int stretchedWidth = (int) (Game.GAME_WIDTH * stretchFactorX);
+            int stretchedHeight = (int) (Game.GAME_HEIGHT * stretchFactorY);
+
+            // Calculate offsets to center the stretched image on the screen.
+            // This ensures the middle of your background image aligns with the middle of your game screen.
+            int offsetX = (stretchedWidth - Game.GAME_WIDTH) / 2;
+            int offsetY = (stretchedHeight - Game.GAME_HEIGHT) / 2;
+
+            // Draw the image. The negative offsets (-offsetX, -offsetY) shift the
+            // larger image so its center aligns with the screen's center.
+            g.drawImage(registerBackgroundImg, -offsetX, -offsetY, stretchedWidth, stretchedHeight, null);
+
+        } else {
+            // Fallback: If image fails to load, draw the original semi-transparent black
+            g.setColor(new Color(0, 0, 0, 180));
+            g.fillRect(0, 0, Game.GAME_WIDTH, Game.GAME_HEIGHT);
+        }
 
         // --- Draw Title ---
         g.setColor(Color.WHITE);
         // Assuming Game has a getGameFont() or you use a default font
-        g.setFont(new Font("Arial", Font.BOLD, (int)(48 * Game.SCALE))); 
+        g.setFont(titleFont);
         String title = "Enter Username";
         int titleWidth = g.getFontMetrics().stringWidth(title);
-        g.drawString(title, Game.GAME_WIDTH / 2 - titleWidth / 2, (int)(Game.GAME_HEIGHT / 2 - 150 * Game.SCALE));
+        g.drawString(title, Game.GAME_WIDTH / 2 - titleWidth / 2, (int) (Game.GAME_HEIGHT / 2 - 150 * Game.SCALE));
 
         // --- Draw Username Input Box ---
         if (inputBoxImage != null) {
-    g.drawImage(inputBoxImage, inputBoxX, inputBoxY, inputBoxWidth, inputBoxHeight, null);
+            g.drawImage(inputBoxImage, inputBoxX, inputBoxY, inputBoxWidth, inputBoxHeight, null);
         } else { // Fallback if image doesn't load
             g.setColor(Color.LIGHT_GRAY);
             g.fillRect(inputBoxX, inputBoxY, inputBoxWidth, inputBoxHeight);
@@ -128,55 +196,44 @@ public class Register extends State implements Statemethods {
 
         // Draw the current username text typed by the user
         g.setColor(Color.DARK_GRAY);
-        g.setFont(new Font("Arial", Font.PLAIN, (int)(24 * Game.SCALE))); // Font for input text
+        // *** MODIFIED: Using the customInputFont for the username text ***
+        g.setFont(customInputFont); // Assumes customInputFont is loaded in loadFonts()
         // Adjust Y position to center text vertically in the box
-        g.drawString(usernameInput.toString(), inputBoxX + (int)(5 * Game.SCALE), inputBoxY + (int)(inputBoxHeight * 0.7));
+        g.drawString(usernameInput.toString(), inputBoxX + (int) (5 * Game.SCALE), inputBoxY + (int) (inputBoxHeight * 0.7));
 
         // Draw typing cursor if input field is active
         if (inputActive && System.currentTimeMillis() % 1000 < 500) { // Blinking cursor
             int textWidth = g.getFontMetrics().stringWidth(usernameInput.toString());
             // Position cursor after the text, inside the box
-            g.fillRect(inputBoxX + (int)(5 * Game.SCALE) + textWidth, inputBoxY + (int)(inputBoxHeight * 0.25), (int)(2 * Game.SCALE), (int)(inputBoxHeight * 0.5));
+            g.fillRect(inputBoxX + (int) (5 * Game.SCALE) + textWidth, inputBoxY + (int) (inputBoxHeight * 0.25), (int) (2 * Game.SCALE), (int) (inputBoxHeight * 0.5));
         }
 
-        // --- Draw Submit Button ---
-        if (submitButtonImage != null) {
-        g.drawImage(submitButtonImage, submitButtonX, submitButtonY, submitButtonWidth, submitButtonHeight, null);
-            } else { // Fallback
-                g.setColor(Color.GREEN);
-                g.fillRect(submitButtonX, submitButtonY, submitButtonWidth, submitButtonHeight);
-                g.setColor(Color.BLACK);
-                g.drawRect(submitButtonX, submitButtonY, submitButtonWidth, submitButtonHeight);
-            }
-        
-        // Draw submit button text
-        g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, (int)(20 * Game.SCALE))); // Font for button text
-        String submitText = "Enter";
-        int submitTextWidth = g.getFontMetrics().stringWidth(submitText);
-        g.drawString(submitText, submitButtonX + submitButtonWidth / 2 - submitTextWidth / 2, submitButtonY + (int)(submitButtonHeight * 0.7));
+        // --- Draw Submit Button (with animation logic) ---
+        BufferedImage submitImgToDraw = isSubmitPressed ? submitButtonPressedImage : submitButtonNormalImage;
+        if (submitImgToDraw != null) {
+            g.drawImage(submitImgToDraw, submitButtonX, submitButtonY, submitButtonWidth, submitButtonHeight, null);
+        } else { // Fallback if image doesn't load, dynamically change color
+            g.setColor(isSubmitPressed ? Color.DARK_GRAY : Color.GREEN); // Pressed state is darker
+            g.fillRect(submitButtonX, submitButtonY, submitButtonWidth, submitButtonHeight);
+            g.setColor(Color.BLACK);
+            g.drawRect(submitButtonX, submitButtonY, submitButtonWidth, submitButtonHeight);
+        }
 
-        // --- Draw Back Button ---
-        if (backButtonImage != null) {
-            g.drawImage(backButtonImage, backButtonX, backButtonY, backButtonWidth, backButtonHeight, null);
-        } else { // Fallback
-            g.setColor(Color.RED);
+        BufferedImage backImgToDraw = isBackPressed ? backButtonPressedImage : backButtonNormalImage;
+        if (backImgToDraw != null) {
+            g.drawImage(backImgToDraw, backButtonX, backButtonY, backButtonWidth, backButtonHeight, null);
+        } else { // Fallback if image doesn't load, dynamically change color
+            g.setColor(isBackPressed ? Color.DARK_GRAY : Color.RED); // Pressed state is darker
             g.fillRect(backButtonX, backButtonY, backButtonWidth, backButtonHeight);
             g.setColor(Color.BLACK);
             g.drawRect(backButtonX, backButtonY, backButtonWidth, backButtonHeight);
-}
-        g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, (int)(16 * Game.SCALE)));
-        String backText = "Return";
-        int backTextWidth = g.getFontMetrics().stringWidth(backText);
-        g.drawString(backText, backButtonX + backButtonWidth / 2 - backTextWidth / 2, backButtonY + (int)(backButtonHeight * 0.7));
+        }
 
         // --- Draw Feedback Message ---
         if (!feedbackMessage.isEmpty()) {
-            g.setColor(Color.YELLOW); // Or red for error, green for success
-            g.setFont(new Font("Arial", Font.BOLD, (int)(20 * Game.SCALE)));
-            int msgWidth = g.getFontMetrics().stringWidth(feedbackMessage);
-            g.drawString(feedbackMessage, Game.GAME_WIDTH / 2 - msgWidth / 2, (int)(submitButtonY + submitButtonHeight + 40 * Game.SCALE));
+            g.setColor(Color.YELLOW); 
+            g.setFont(titleFont.deriveFont(Font.BOLD, (float) (20 * Game.SCALE)));            int msgWidth = g.getFontMetrics().stringWidth(feedbackMessage);
+            g.drawString(feedbackMessage, Game.GAME_WIDTH / 2 - msgWidth / 2, (int) (submitButtonY + submitButtonHeight + 40 * Game.SCALE));
         }
     }
 
@@ -184,48 +241,55 @@ public class Register extends State implements Statemethods {
 
     @Override
     public void mousePressed(MouseEvent e) {
-        // Check if input box was clicked
-        if (e.getX() >= backButtonX && e.getX() <= backButtonX + backButtonWidth &&
-        e.getY() >= backButtonY && e.getY() <= backButtonY + backButtonHeight) {
-        
-        Gamestate.state = Gamestate.MENU;
-        
-        inputActive = false;
-        usernameInput.setLength(0);
-        feedbackMessage = "";
-        
-    }
-        
-        
-        
-        // Check if submit button was clicked
-        if (e.getX() >= submitButtonX && e.getX() <= submitButtonX + submitButtonWidth &&
-            e.getY() >= submitButtonY && e.getY() <= submitButtonY + submitButtonHeight) {
-            handleSubmit();
-        }   
-
-        // Check if back button was clicked
-        if (e.getX() >= backButtonX && e.getX() <= backButtonX + backButtonWidth &&
-            e.getY() >= backButtonY && e.getY() <= backButtonY + backButtonHeight) {
-            Gamestate.state = Gamestate.MENU; // Go back to main menu
-            inputActive = false; // Deactivate input field
-            usernameInput.setLength(0); // Clear username input
-            feedbackMessage = ""; // Clear any messages
+        // Check if submit button was clicked to set its pressed state
+        if (isInBounds(e, submitButtonX, submitButtonY, submitButtonWidth, submitButtonHeight)) {
+            isSubmitPressed = true;
+        }
+        // Check if back button was clicked to set its pressed state
+        else if (isInBounds(e, backButtonX, backButtonY, backButtonWidth, backButtonHeight)) {
+            isBackPressed = true;
+        }
+        // If clicking outside buttons, but inside input box, activate input
+        else if (isInBounds(e, inputBoxX, inputBoxY, inputBoxWidth, inputBoxHeight)) {
+            inputActive = true;
+        } else {
+            // If clicked anywhere else, deactivate input
+            inputActive = false;
         }
     }
 
     @Override
-    public void mouseReleased(MouseEvent e) { } // Keep this as is if you don't use it
+    public void mouseReleased(MouseEvent e) {
+        // If submit button was pressed and released over it
+        if (isSubmitPressed) {
+            if (isInBounds(e, submitButtonX, submitButtonY, submitButtonWidth, submitButtonHeight)) {
+                // Action: Submit
+                handleSubmit();
+            }
+        }
+        // If back button was pressed and released over it
+        if (isBackPressed) {
+            if (isInBounds(e, backButtonX, backButtonY, backButtonWidth, backButtonHeight)) {
+                // Action: Go back to main menu
+                Gamestate.state = Gamestate.MENU;
+                inputActive = false; // Deactivate input field
+                usernameInput.setLength(0); // Clear username input
+                feedbackMessage = ""; // Clear any messages
+            }
+        }
+        // ALWAYS reset pressed states after mouse release, regardless of whether an action was triggered
+        isSubmitPressed = false;
+        isBackPressed = false;
+    }
 
     @Override
     public void mouseMoved(MouseEvent e) { } // Keep this as is if you don't use it
 
     @Override
-    public void mouseClicked(MouseEvent e) { // <--- ADD THIS METHOD
-        // You can leave this empty if you don't need specific logic for mouse clicks
-        // (as opposed to press/release)
+    public void mouseClicked(MouseEvent e) {
+        // You can leave this empty, as press/release handles the primary button interaction
     }
-    
+
     @Override
     public void keyPressed(KeyEvent e) {
         // Keep this for non-character keys like ENTER, BACKSPACE, ESCAPE
@@ -257,7 +321,7 @@ public class Register extends State implements Statemethods {
     @Override
     public void keyTyped(KeyEvent e) {
         // DEBUG: Check if method is called and inputActive state
-        System.out.println("keyTyped received: '" + e.getKeyChar() + "', inputActive: " + inputActive); 
+        System.out.println("keyTyped received: '" + e.getKeyChar() + "', inputActive: " + inputActive);
 
         if (inputActive) {
             char typedChar = e.getKeyChar();
@@ -266,7 +330,7 @@ public class Register extends State implements Statemethods {
                 if (usernameInput.length() < maxUsernameLength) {
                     usernameInput.append(typedChar);
                 } else {
-                    feedbackMessage = "Max length reached!";
+                    displayFeedback("Max length reached!", Color.RED); // Use helper for consistency
                 }
             }
         }
@@ -292,8 +356,7 @@ public class Register extends State implements Statemethods {
         // Attempt to save the data to CSV
         if (saveToCSV(username, finalGameTimeMillis)) {
             displayFeedback("Username registered successfully!", Color.GREEN);
-            // ADD THIS LINE: Set the flag to true on success
-            shouldTransitionToMenu = true; 
+            shouldTransitionToMenu = true;
         } else {
             displayFeedback("Failed to save Username. Try again.", Color.RED);
         }
@@ -341,7 +404,7 @@ public class Register extends State implements Statemethods {
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             String line;
             // Skip header
-            br.readLine(); 
+            br.readLine();
             while ((line = br.readLine()) != null) {
                 // Split the line by comma
                 String[] parts = line.split(",");
@@ -354,5 +417,11 @@ public class Register extends State implements Statemethods {
             e.printStackTrace();
         }
         return false; // Username not found or error occurred
+    }
+
+    // --- NEW: Helper method to check if mouse event is within given bounds ---
+    private boolean isInBounds(MouseEvent e, int x, int y, int width, int height) {
+        return e.getX() >= x && e.getX() <= x + width &&
+               e.getY() >= y && e.getY() <= y + height;
     }
 }

@@ -11,88 +11,104 @@ import mainn.Game;
 
 public class GameObject {
 
-	protected int x, y, objType;
-	protected Rectangle2D.Float hitbox;
-	protected boolean doAnimation, active = true;
-	protected int aniTick, aniIndex;
-	protected int xDrawOffset, yDrawOffset;
+    protected int x, y, objType;
+    protected Rectangle2D.Float hitbox;
+    protected boolean doAnimation, active = true;
+    protected int aniTick, aniIndex;
+    protected int xDrawOffset, yDrawOffset; // These are already present, good!
 
-	public GameObject(int x, int y, int objType) {
-		this.x = x;
-		this.y = y;
-		this.objType = objType;
-	}
+    public GameObject(int x, int y, int objType) {
+        this.x = x;
+        this.y = y;
+        this.objType = objType;
+    }
 
-	protected void updateAnimationTick() {
-		aniTick++;
-		if (aniTick >= ANI_SPEED) {
-			aniTick = 0;
-			aniIndex++;
-			if (aniIndex >= GetSpriteAmount(objType)) {
-				aniIndex = 0;
-				if (objType == BARREL || objType == BOX) {
-					doAnimation = false;
-					active = false;
-				} else if (objType == CANNON_LEFT || objType == CANNON_RIGHT)
-					doAnimation = false;
-			}
-		}
-	}
+    public void update() {
+        if (doAnimation) {
+            updateAnimationTick();
+        }
+    }
 
-	public void reset() {
-		aniIndex = 0;
-		aniTick = 0;
-		active = true;
+    protected void updateAnimationTick() {
+        aniTick++;
+        if (aniTick >= ANI_SPEED) {
+            aniTick = 0;
+            aniIndex++;
+            if (aniIndex >= GetSpriteAmount(objType)) {
+                aniIndex = 0;
+                if (objType == BARREL || objType == BOX) {
+                    doAnimation = false;
+                    active = false;
+                } else if (objType == CANNON_LEFT || objType == CANNON_RIGHT) {
+                    doAnimation = false;
+                }
+            }
+        }
+    }
 
-		if (objType == BARREL || objType == BOX || objType == CANNON_LEFT || objType == CANNON_RIGHT)
-			doAnimation = false;
-		else
-			doAnimation = true;
-	}
+    public void reset() {
+        aniIndex = 0;
+        aniTick = 0;
+        active = true;
 
-	protected void initHitbox(int width, int height) {
-		hitbox = new Rectangle2D.Float(x, y, (int) (width * Game.SCALE), (int) (height * Game.SCALE));
-	}
+        if (objType == BARREL || objType == BOX || objType == CANNON_LEFT || objType == CANNON_RIGHT)
+            doAnimation = false;
+        else
+            doAnimation = true;
+    }
 
-	public void drawHitbox(Graphics g, int xLvlOffset) {
-		g.setColor(Color.PINK);
-		g.drawRect((int) hitbox.x - xLvlOffset, (int) hitbox.y, (int) hitbox.width, (int) hitbox.height);
-	}
+    protected void initHitbox(int width, int height) {
+        hitbox = new Rectangle2D.Float(x, y, (int) (width * Game.SCALE), (int) (height * Game.SCALE));
+    }
 
-	public int getObjType() {
-		return objType;
-	}
+    public void drawHitbox(Graphics g, int xLvlOffset) {
+        g.setColor(Color.PINK);
+        g.drawRect((int) hitbox.x - xLvlOffset, (int) hitbox.y, (int) hitbox.width, (int) hitbox.height);
+    }
 
-	public Rectangle2D.Float getHitbox() {
-		return hitbox;
-	}
+    public int getObjType() {
+        return objType;
+    }
 
-	public boolean isActive() {
-		return active;
-	}
+    public Rectangle2D.Float getHitbox() {
+        return hitbox;
+    }
 
-	public void setActive(boolean active) {
-		this.active = active;
-	}
+    public boolean isActive() {
+        return active;
+    }
 
-	public void setAnimation(boolean doAnimation) {
-		this.doAnimation = doAnimation;
-	}
+    public void setActive(boolean active) {
+        this.active = active;
+    }
 
-	public int getxDrawOffset() {
-		return xDrawOffset;
-	}
+    public void setAnimation(boolean doAnimation) {
+        this.doAnimation = doAnimation;
+    }
 
-	public int getyDrawOffset() {
-		return yDrawOffset;
-	}
+    public int getxDrawOffset() {
+        return xDrawOffset;
+    }
 
-	public int getAniIndex() {
-		return aniIndex;
-	}
+    public int getyDrawOffset() {
+        return yDrawOffset;
+    }
 
-	public int getAniTick() {
-		return aniTick;
-	}
+    // --- NEW METHODS: Setters for draw offsets ---
+    public void setxDrawOffset(int xDrawOffset) {
+        this.xDrawOffset = xDrawOffset;
+    }
 
+    public void setyDrawOffset(int yDrawOffset) {
+        this.yDrawOffset = yDrawOffset;
+    }
+    // ---------------------------------------------
+
+    public int getAniIndex() {
+        return aniIndex;
+    }
+
+    public int getAniTick() {
+        return aniTick;
+    }
 }

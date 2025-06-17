@@ -15,7 +15,8 @@ import java.awt.image.BufferedImage;
 import audio.AudioPlayer;
 import gamestates.Playing;
 import mainn.Game;
-import utilz.LoadSave;
+import utilz.LoadSave; // Ensure this import is present
+import static utilz.Constants.UI.*; // Ensure this static import is present
 
 public class Player extends Entity {
 
@@ -30,9 +31,16 @@ public class Player extends Entity {
     private float fallSpeedAfterCollision = 0.5f * Game.SCALE;
 
     // health system
-    private int lives = 3;    
-    private final int MAX_LIVES = 3;    
-    private boolean dead = false;    
+    private int lives = 3;
+    private final int MAX_LIVES = 3;
+    private boolean dead = false;
+
+    // --- NEW Animated Heart fields ---
+    private BufferedImage[] heartAnimations; // Array to hold all animation frames
+    private int heartAnimationTick = 0;      // Counter for animation speed
+    private int heartAnimationFrame = 0;     // Index of the current animation frame to draw
+    // Removed: testHeartX and testHeartY are no longer needed as we're drawing at iconX/iconY
+    // --- END NEW Animated Heart fields ---
 
     // status bar ui
     private BufferedImage statusBarImg;
@@ -42,7 +50,7 @@ public class Player extends Entity {
     private int statusBarX = (int) (10 * Game.SCALE);
     private int statusBarY = (int) (10 * Game.SCALE);
 
-    private int healthBarXStart = (int) (34 * Game.SCALE);    
+    private int healthBarXStart = (int) (34 * Game.SCALE);
     private int healthBarYStart = (int) (14 * Game.SCALE);
 
     private int powerBarWidth = (int) (104 * Game.SCALE);
@@ -69,7 +77,7 @@ public class Player extends Entity {
     private final PlayerCharacter playerCharacter;
 
     // NEW: Variable for the life icon image
-    private BufferedImage lifeIcon;    
+    private BufferedImage lifeIcon;
 
     // constructor
     public Player(PlayerCharacter playerCharacter, Playing playing) {
@@ -81,6 +89,14 @@ public class Player extends Entity {
         animations = LoadSave.loadAnimations(playerCharacter);
         statusBarImg = LoadSave.GetSpriteAtlas(LoadSave.STATUS_BAR);
         lifeIcon = LoadSave.GetSpriteAtlas(LoadSave.LIFE_ICON); // NEW: Load the life icon
+
+        // --- NEW: Load the heart animation sprites ---
+        heartAnimations = LoadSave.GetHeartAnimationSprites();
+        // Removed: Debug print statements
+         System.out.println("Player: heartAnimations array size = " + (heartAnimations != null ? heartAnimations.length : "null"));
+         System.out.println("Player: First heart frame is null? " + (heartAnimations != null && heartAnimations.length > 0 ? (heartAnimations[0] == null) : "N/A"));
+        // --- END NEW ---
+
         initHitbox(playerCharacter.hitboxW, playerCharacter.hitboxH);
         initAttackBox();
     }
@@ -135,6 +151,10 @@ public class Player extends Entity {
             }
             return;
         }
+
+        // --- NEW: Update the heart animation tick ---
+        updateHeartAnimation();
+        // --- END NEW ---
 
         updateAttackBox();
 
@@ -237,15 +257,15 @@ public class Player extends Entity {
     public void render(Graphics g, int lvlOffset) {
         int aniStateForDrawing = state;
         if (state == ATTACK || powerAttackActive) {
-            if (moving) { 
+            if (moving) {
                 aniStateForDrawing = RUNNING;
-            } else { 
+            } else {
                 aniStateForDrawing = IDLE;
             }
         }
-        
+
         g.drawImage(animations[playerCharacter.getRowIndex(aniStateForDrawing)][aniIndex], (int) (hitbox.x - playerCharacter.xDrawOffset) - lvlOffset + flipX, (int) (hitbox.y - playerCharacter.yDrawOffset + (int) (pushDrawOffset)), width * flipW, height, null);
-        drawHitbox(g, lvlOffset);
+//        drawHitbox(g, lvlOffset);
         drawUI(g);
     }
 
@@ -254,20 +274,37 @@ public class Player extends Entity {
         g.drawImage(statusBarImg, statusBarX, statusBarY, statusBarWidth, statusBarHeight, null);
 
         // health
-        if (lifeIcon != null) {    
+        // This block now draws the animated heart instead of the static lifeIcon
+        if (heartAnimations != null && heartAnimations.length > 0 && heartAnimations[heartAnimationFrame] != null) {
             int iconX = healthBarXStart + statusBarX;
             int iconY = healthBarYStart + statusBarY;
-            int iconSize = (int)(100 * Game.SCALE);    
+            int iconSize = (int)(100 * Game.SCALE); // Still used for text alignment
 
-            g.drawImage(lifeIcon, iconX, iconY, iconSize, iconSize, null);
+            g.drawImage(heartAnimations[heartAnimationFrame], // Draw animated frame
+                        iconX, // Use same X as old lifeIcon
+                        iconY, // Use same Y as old lifeIcon
+                        (int)(HEART_SPRITE_WIDTH * Game.SCALE),  // Scaled width of animated heart
+                        (int)(HEART_SPRITE_HEIGHT * Game.SCALE), // Scaled height of animated heart
+                        null);
 
-            g.setColor(Color.WHITE);    
-            g.setFont(new Font("Jersey15-Regular", Font.BOLD, (int)(24 * Game.SCALE)));    
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("Jersey15-Regular", Font.BOLD, (int)(24 * Game.SCALE)));
 
-            int textX = iconX + iconSize + (int)(1 * Game.SCALE);    
-            int textY = iconY + (int)(iconSize / 2) + (int)(g.getFontMetrics().getAscent() / 2) - (int)(g.getFontMetrics().getDescent() / 2); // Center text vertically with icon
-
+            int textX = iconX + (int) (HEART_SPRITE_WIDTH * Game.SCALE) + (int) (5 * Game.SCALE);
+            int textY = iconY + (int) (HEART_SPRITE_HEIGHT * Game.SCALE / 2) + (int) (g.getFontMetrics().getAscent() / 2) - (int) (g.getFontMetrics().getDescent() / 2);
+            
             g.drawString("x" + lives, textX, textY);
+        } else if (lifeIcon != null) { // Fallback if heart animations failed to load, draw static lifeIcon
+             int iconX = healthBarXStart + statusBarX;
+             int iconY = healthBarYStart + statusBarY;
+             int iconSize = (int)(100 * Game.SCALE);
+             g.drawImage(lifeIcon, iconX, iconY, iconSize, iconSize, null);
+
+             g.setColor(Color.WHITE);
+             g.setFont(new Font("Jersey15-Regular", Font.BOLD, (int)(24 * Game.SCALE)));
+             int textX = iconX + iconSize + (int)(1 * Game.SCALE);
+             int textY = iconY + (int)(iconSize / 2) + (int)(g.getFontMetrics().getAscent() / 2) - (int)(g.getFontMetrics().getDescent() / 2);
+             g.drawString("x" + lives, textX, textY);
         }
     }
 
@@ -290,6 +327,19 @@ public class Player extends Entity {
             }
         }
     }
+
+    // --- NEW: Method to update the heart animation frames ---
+    private void updateHeartAnimation() {
+        heartAnimationTick++;
+        if (heartAnimationTick >= HEART_ANIM_SPEED) { // Uses HEART_ANIM_SPEED from Constants.UI
+            heartAnimationTick = 0; // Reset tick
+            heartAnimationFrame++;  // Move to the next frame
+            if (heartAnimationFrame >= HEART_SPRITE_FRAMES) { // Uses HEART_SPRITE_FRAMES from Constants.UI
+                heartAnimationFrame = 0; // Loop back to the first frame
+            }
+        }
+    }
+    // --- END NEW ---
 
     // animation state setting
     private void setAnimation() {
@@ -440,10 +490,11 @@ public class Player extends Entity {
 
         lives--; // decrease a life/hit point
         newState(HIT); // transition to the hit animation
-        
+
         playing.getGame().getAudioPlayer().playEffect(AudioPlayer.PLAYER_HIT);
 
     }
+
 
     // player hit with enemy pushback
     public void hit(Enemy e) {

@@ -46,14 +46,14 @@ public class Menu extends State implements Statemethods {
     }
 
     private void loadCustomFonts() {
-        Font baseFont = LoadSave.GetFont(LoadSave.CUSTOM_FONT_JERSEY);
+        Font baseFont = LoadSave.GetFont(LoadSave.CUSTOM_FONT_ARCADE_CLASSIC);
 
         if (baseFont != null) {
-            customGameTitleFont = baseFont.deriveFont(Font.BOLD, (float)(36 * Game.SCALE));
+            customGameTitleFont = baseFont.deriveFont(Font.BOLD, (float)(40 * Game.SCALE));
             customInstructionFont = baseFont.deriveFont(Font.PLAIN, (float)(16 * Game.SCALE));
         } else {
             System.err.println("Custom font 'Jersey15-Regular.ttf' not loaded. Falling back to Arial.");
-            customGameTitleFont = new Font("Arial", Font.BOLD, (int)(36 * Game.SCALE));
+            customGameTitleFont = new Font("Arial", Font.PLAIN, (int)(36 * Game.SCALE));
             customInstructionFont = new Font("Arial", Font.PLAIN, (int)(16 * Game.SCALE));
         }
     }
@@ -69,6 +69,7 @@ public class Menu extends State implements Statemethods {
         
     }
 
+    // In your gamestates/Menu.java
     @Override
     public void draw(Graphics g) {
         g.drawImage(backgroundImgPink, 0, 0, Game.GAME_WIDTH, Game.GAME_HEIGHT, null);
@@ -77,15 +78,32 @@ public class Menu extends State implements Statemethods {
         g.setFont(customGameTitleFont);
         g.setColor(new Color(255, 255, 255));
 
-        String gameTitle = "Jump up, Superstar!";
-        FontMetrics fm = g.getFontMetrics(customGameTitleFont);
-        int titleWidth = fm.stringWidth(gameTitle);
-        int titleX = (Game.GAME_WIDTH - titleWidth) / 2;
-        int titleY = (int) (85 * Game.SCALE);
-        g.drawString(gameTitle, titleX, titleY);
+        // --- MODIFIED TITLE DRAWING START ---
+        String line1 = "Jump up";
+        String line2 = "Superstar!";
 
-        for (MenuButton mb : buttons)
+        FontMetrics fm = g.getFontMetrics(customGameTitleFont);
+
+        // Calculate X position for both lines to be horizontally centered
+        int line1Width = fm.stringWidth(line1);
+        int line1X = (Game.GAME_WIDTH - line1Width) / 2;
+
+        int line2Width = fm.stringWidth(line2);
+        int offsetX = (int) (5.5 * Game.SCALE);        
+        int line2X = (Game.GAME_WIDTH - line2Width) / 2 + offsetX; 
+
+       
+        int line1Y = (int) (65 * Game.SCALE);
+
+        int line2Y = line1Y + fm.getHeight() + (int) (-12 * Game.SCALE);
+
+        g.drawString(line1, line1X, line1Y);
+        g.drawString(line2, line2X, line2Y);
+        // --- MODIFIED TITLE DRAWING END ---
+
+        for (MenuButton mb : buttons) {
             mb.draw(g);
+        }
     }
 
     @Override

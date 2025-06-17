@@ -177,26 +177,12 @@ public void update() {
         // --- THIS IS THE NEW / EDITED PART ---
         gameCompletedOverlay.update(); // Allow the game completed overlay to update (e.g., for animations)
 
-        // Only transition to the Register screen ONCE, right after game completion is detected
-        // and if we are not already on the Register screen.
         if (Gamestate.state != Gamestate.REGISTER) {
-            // 1. Stop any background music (e.g., level music)
             game.getAudioPlayer().stopSong(); 
-
-            // 2. Get the Register state instance from your main Game class
-            //    (This assumes you have 'public Register getRegister()' in Game.java)
             Register registerState = game.getRegister();
-
-            // 3. Pass the final total game time to the Register state
             registerState.setFinalGameTime(totalGameTimeMillis);
-
-            // 4. Change the game's overall state to REGISTER
             Gamestate.state = Gamestate.REGISTER;
 
-            // Optional: You might want to reset the 'gameCompleted' flag here if your logic
-            // needs it to prevent re-triggering this specific block, though changing Gamestate.state
-            // will largely achieve that for this 'update()' method loop.
-            // gameCompleted = false; // Uncomment if your game flow needs this reset here.
         }
         // --- END NEW / EDITED PART ---
     } else if (gameOver) {
@@ -211,7 +197,7 @@ public void update() {
         levelManager.update();
         objectManager.update(levelManager.getCurrentLevel().getLevelData(), player);
         player.update();
-        enemyManager.update(levelManager.getCurrentLevel().getLevelData());
+        enemyManager.update(levelManager.getCurrentLevel().getLevelData(), player);
         checkCloseToBorder();
         if (drawShip)
             updateShipAni();

@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import javax.imageio.ImageIO;
 
 import mainn.Game; // Import Game to use Game.SCALE
+import static utilz.Constants.UI.*;
 
 import static utilz.Constants.PlayerConstants.*; // Import PlayerConstants for action integers
 
@@ -28,8 +29,6 @@ public class LoadSave {
     public static final String FROG_JUMP = "/res/Frog_Jump.png";
     public static final String FROG_FALL = "/res/Frog_Fall.png";
     public static final String FROG_HIT = "/res/Frog_Hit.png";
-    // If you have a Frog Attack or Dead animation, add them here
-    // public static final String FROG_ATTACK = "/res/Frog_Attack.png";
     // public static final String FROG_DEAD = "/res/Frog_Dead.png";
 
 
@@ -68,22 +67,23 @@ public class LoadSave {
     public static final String WATER_BOTTOM = "/res/water.png";
     public static final String SHIP = "/res/ship.png";
     public static final String REGISTER_INPUT_BG = "/res/register_input_bg.png";
-    public static final String REGISTER_SUBMIT_BUTTON = "/res/submit_button.png";
-    public static final String REGISTER_BACK_BUTTON = "/res/back_button.png";
     public static final String LIFE_ICON = "/res/heart_icon.png";
     public static final String LEVEL_PATH_PREFIX = "/res/lvls/";
     public static final String CUSTOM_FONT_JERSEY = "/fonts/Jersey15-Regular.ttf";
+    public static final String CUSTOM_FONT_ARCADE_CLASSIC = "/fonts/arcadeclassic.ttf";
+    public static final String STAR_ANIMATION = "/res/star.png";
+    public static final String REGISTER_MAIN_BACKGROUND = "/res/register_background.png";
 
+    
+    public static final String REGISTER_SUBMIT_BUTTON = "/res/submit_button.png";
+    public static final String REGISTER_BACK_BUTTON = "/res/back_button.png";
+    public static final String REGISTER_SUBMIT_BUTTON_PRESSED = "/res/submit_pressed.png"; // Path to your pressed submit button image
+    public static final String REGISTER_BACK_BUTTON_PRESSED = "/res/back_pressed.png";
 
     public static BufferedImage[][] loadAnimations(PlayerCharacter pc) {
-        // We need to know the total number of possible animation states from PlayerConstants
-        // Assuming PlayerConstants.NUM_PLAYER_ACTIONS exists and is static final int
-        // Given your Constants.java, NUM_PLAYER_ACTIONS would need to be added, but
-        // we can derive it from the highest constant (DEAD = 6) + 1.
         int numPlayerActions = DEAD + 1; // This will be 7 if DEAD is 6.
         BufferedImage[][] animations = new BufferedImage[numPlayerActions][];
 
-        // This will now switch based on the character type
         switch (pc) {
             case PIRATE:
             case ORC:
@@ -170,6 +170,26 @@ public class LoadSave {
             }
         }
         return img;
+    }
+    
+    public static BufferedImage[] GetHeartAnimationSprites() {
+        BufferedImage heartSheet = GetSpriteAtlas(HEART_SPRITE_SHEET); // Uses HEART_SPRITE_SHEET from Constants.UI
+        BufferedImage[] heartFrames = new BufferedImage[HEART_SPRITE_FRAMES];
+
+        if (heartSheet == null) {
+            System.err.println("Failed to load heart sprite sheet: " + HEART_SPRITE_SHEET + ". Check path and file existence!");
+            return heartFrames; // Return an empty array if loading fails
+        }
+
+        for (int i = 0; i < HEART_SPRITE_FRAMES; i++) {
+            heartFrames[i] = heartSheet.getSubimage(
+                    i * HEART_SPRITE_WIDTH, // X-coordinate for the current frame
+                    0, // Y-coordinate (assuming frames are in one row)
+                    HEART_SPRITE_WIDTH, // Width of a single frame
+                    HEART_SPRITE_HEIGHT // Height of a single frame
+            );
+        }
+        return heartFrames;
     }
 
     public static Font GetFont(String fileName) {

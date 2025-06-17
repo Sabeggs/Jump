@@ -13,10 +13,16 @@ public class State {
 	public State(Game game) {
 		this.game = game;
 	}
+        
+        
 
 	public boolean isIn(MouseEvent e, MenuButton mb) {
 		return mb.getBounds().contains(e.getX(), e.getY());
 	}
+        
+        protected boolean isIn(MouseEvent e, int x, int y, int width, int height) {
+        return e.getX() >= x && e.getX() <= x + width && e.getY() >= y && e.getY() <= y + height;
+    }
 
 	public Game getGame() {
 		return game;
